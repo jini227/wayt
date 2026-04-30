@@ -1,21 +1,54 @@
 {
   "name": "wayt",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
+    "expo-go": "expo start --go --lan --port 8083 --clear",
+    "start:go": "expo start --lan",
+    "start:tunnel": "expo start --tunnel",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "build:android:preview": "eas build --profile preview --platform android",
+    "build:android": "eas build --profile production --platform android",
+    "build:ios": "eas build --profile production --platform ios"
   },
   "dependencies": {
+    "@expo/metro-runtime": "~6.1.2",
+    "@mj-studio/react-native-naver-map": "^2.8.0",
+    "@react-native-kakao/core": "^2.4.5",
+    "@react-native-kakao/user": "^2.4.5",
     "expo": "~54.0.33",
+    "expo-build-properties": "~1.0.10",
+    "expo-clipboard": "~8.0.8",
+    "expo-constants": "~18.0.13",
+    "expo-device": "~8.0.10",
+    "expo-image-picker": "~17.0.11",
+    "expo-linear-gradient": "~15.0.8",
+    "expo-linking": "~8.0.12",
+    "expo-location": "~19.0.8",
+    "expo-notifications": "~0.32.17",
+    "expo-router": "~6.0.23",
+    "expo-secure-store": "~15.0.8",
+    "expo-splash-screen": "~31.0.13",
     "expo-status-bar": "~3.0.9",
+    "expo-web-browser": "~15.0.11",
+    "lucide-react-native": "^1.11.0",
     "react": "19.1.0",
-    "react-native": "0.81.5"
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "react-native-svg": "15.12.1",
+    "react-native-web": "^0.21.0",
+    "react-native-webview": "13.15.0"
   },
   "devDependencies": {
     "@types/react": "~19.1.0",
+    "dotenv": "^17.4.2",
+    "eas-cli": "^18.8.1",
     "typescript": "~5.9.2"
   },
   "private": true
