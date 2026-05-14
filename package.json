@@ -12,9 +12,9 @@
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "export:web": "expo export --platform web --output-dir dist-web",
-    "build:android:preview": "eas build --profile preview --platform android",
-    "build:android": "eas build --profile production --platform android",
-    "build:ios": "eas build --profile production --platform ios"
+    "build:android:preview": "npx --yes eas-cli@18.11.0 build --profile preview --platform android",
+    "build:android": "npx --yes eas-cli@18.11.0 build --profile production --platform android",
+    "build:ios": "npx --yes eas-cli@18.11.0 build --profile production --platform ios"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -49,8 +49,11 @@
   "devDependencies": {
     "@types/react": "~19.1.0",
     "dotenv": "^17.4.2",
-    "eas-cli": "^18.8.1",
+    "ts-node": "^10.9.2",
     "typescript": "~5.9.2"
+  },
+  "overrides": {
+    "postcss": "^8.5.14"
   },
   "private": true
 }

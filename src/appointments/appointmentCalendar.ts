@@ -97,7 +97,7 @@ export function appointmentsForCalendarDate<T extends CalendarAppointmentLike>(
   dateKey: string
 ): T[] {
   return appointments
-    .filter((appointment) => calendarDateKey(new Date(appointment.scheduledAt)) === dateKey)
+    .filter((appointment) => isOpenAppointment(appointment) && calendarDateKey(new Date(appointment.scheduledAt)) === dateKey)
     .sort((left, right) => new Date(left.scheduledAt).getTime() - new Date(right.scheduledAt).getTime());
 }
 
@@ -116,6 +116,10 @@ export function appointmentIndicator(count: number): AppointmentIndicator {
 
 function countAppointmentsByDate<T extends CalendarAppointmentLike>(appointments: readonly T[]) {
   return appointments.reduce<Map<string, number>>((counts, appointment) => {
+    if (!isOpenAppointment(appointment)) {
+      return counts;
+    }
+
     const key = calendarDateKey(new Date(appointment.scheduledAt));
     if (!key) {
       return counts;
@@ -124,6 +128,10 @@ function countAppointmentsByDate<T extends CalendarAppointmentLike>(appointments
     counts.set(key, (counts.get(key) ?? 0) + 1);
     return counts;
   }, new Map());
+}
+
+function isOpenAppointment(appointment: CalendarAppointmentLike) {
+  return !appointment.completedAt;
 }
 
 function calendarMonthParts(date: Date) {

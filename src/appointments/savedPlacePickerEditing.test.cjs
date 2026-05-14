@@ -31,7 +31,7 @@ assert(
   "saved place modal keeps a fixed sheet height across tabs"
 );
 assert(
-  source.includes("favoritePlaceList: {\n    flex: 1"),
+  /favoritePlaceList:\s*\{\s*flex:\s*1/.test(source),
   "saved place list scrolls inside the fixed-height sheet"
 );
 assert(

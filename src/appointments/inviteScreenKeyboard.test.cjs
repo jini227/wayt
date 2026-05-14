@@ -55,13 +55,16 @@ const inviteScreenState = [
   "",
   false,
   [],
+  new Set(),
   [],
+  false,
   false,
   false,
   "",
   false,
   new Set(),
   false,
+  [],
   []
 ];
 let stateIndex = 0;

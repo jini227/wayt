@@ -30,8 +30,9 @@ assert(fs.existsSync(calendarPath), "appointment calendar is implemented as a fu
 const calendarSource = fs.readFileSync(calendarPath, "utf8");
 
 assert(
-  calendarSource.includes('apiGetAuthenticated<ApiAppointment[]>("/appointments/upcoming")'),
-  "calendar screen loads the full upcoming appointment set"
+  calendarSource.includes("calendarGridDateRange") &&
+    calendarSource.includes("`/appointments?scope=all&from=${encodeURIComponent(visibleDateRange.from)}&to=${encodeURIComponent(visibleDateRange.to)}`"),
+  "calendar screen loads the visible calendar range"
 );
 assert(
   calendarSource.includes("buildCalendarMonth") &&

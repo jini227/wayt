@@ -50,7 +50,7 @@ import {
 } from "../../src/appointments/liveLocationSharing";
 import { formatPenaltyLabel, isMeaningfulPenalty } from "../../src/appointments/penalty";
 import { displayAppointmentMemo } from "../../src/appointments/liveAppointmentMemo";
-import { createAppointmentMapMeta } from "../../src/appointments/liveAppointmentSchedule";
+import { createAppointmentMapMeta, formatAppointmentScheduleLabel } from "../../src/appointments/liveAppointmentSchedule";
 import {
   previewStatusLogs,
   shouldShowStatusLogSheetAction,
@@ -708,8 +708,8 @@ export default function LiveAppointmentScreen() {
   const myTravelInfoDisplay = etaSummary
     ? createMyTravelInfoDisplay({ etaSummary, travelModeLabel: myTravelModeLabel })
     : null;
-  const statusLogPreview = previewStatusLogs(liveAppointment.statusLogs);
-  const showStatusLogSheetAction = shouldShowStatusLogSheetAction(liveAppointment.statusLogs);
+  const statusLogPreview = previewStatusLogs(appointment.statusLogs);
+  const showStatusLogSheetAction = shouldShowStatusLogSheetAction(appointment.statusLogs);
   const travelModeSubtitle = myParticipant
     ? travelModeEtaHint({
       mode: myParticipant.travelMode,
@@ -940,6 +940,12 @@ export default function LiveAppointmentScreen() {
         </Pressable>
         <View style={styles.headerTitleWrap}>
           <Text style={styles.title} numberOfLines={1}>{liveAppointment.title}</Text>
+          <Text style={styles.scheduleLabel} numberOfLines={1}>
+            {formatAppointmentScheduleLabel(liveAppointment.scheduledAt)}
+          </Text>
+          <Text style={styles.scheduleLabel} numberOfLines={1}>
+            {liveAppointment.placeName}
+          </Text>
           <Text style={styles.subtitle}>
             {countdownPrefix(liveAppointment.scheduledAt)} <Text style={styles.blue}>{countdownValue(liveAppointment.scheduledAt)}</Text>
           </Text>
@@ -1336,9 +1342,9 @@ function statusLogIconColor(message: string) {
 
 const styles = StyleSheet.create({
   headerRow: {
-    minHeight: 68,
+    minHeight: 112,
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     gap: 12
   },
   backButton: {
@@ -1377,6 +1383,12 @@ const styles = StyleSheet.create({
   subtitle: {
     color: colors.textMuted,
     fontSize: 16,
+    marginTop: 2
+  },
+  scheduleLabel: {
+    color: colors.textMuted,
+    fontSize: 16,
+    fontWeight: "500",
     marginTop: 2
   },
   blue: {

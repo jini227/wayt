@@ -1,5 +1,3 @@
-import { Platform } from "react-native";
-
 type ExpoProjectConfig = {
   easConfig?: {
     projectId?: string | null;
@@ -13,6 +11,10 @@ type ExpoProjectConfig = {
       appEnvironment?: string | null;
     } | null;
   } | null;
+};
+
+type ReactNativePlatform = {
+  OS: string;
 };
 
 export type PushRegistrationDisabledReason =
@@ -97,6 +99,7 @@ export async function registerForPushNotificationsAsync(): Promise<PushRegistrat
       import("expo-constants")
     ]);
     const { apiPostAuthenticated } = await import("../api/client");
+    const Platform = getReactNativePlatform();
 
     const constants = Constants.default as ExpoProjectConfig;
     const projectId = resolveExpoProjectId(constants);
@@ -150,6 +153,10 @@ export async function registerForPushNotificationsAsync(): Promise<PushRegistrat
       reason: error instanceof Error ? error.message : "Push registration failed"
     };
   }
+}
+
+function getReactNativePlatform(): ReactNativePlatform {
+  return require("react-native").Platform as ReactNativePlatform;
 }
 
 function appEnvironment(constants: ExpoProjectConfig) {
