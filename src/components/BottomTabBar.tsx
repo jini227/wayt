@@ -1,17 +1,36 @@
 import { usePathname, useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { colors } from "../theme";
 import { tabs } from "../data/mock";
 import { getBottomTabPressAction, isBottomTabActive } from "./bottomTabNavigation";
 import { useScrollToTopRegistry } from "./ScrollToTopRegistry";
+import { DESKTOP_SIDEBAR_WIDTH, isDesktopWebLayout } from "./webDesktopLayout";
 
-export function BottomTabBar() {
+type BottomTabBarVariant = "mobile" | "desktop" | "all";
+
+export function BottomTabBar({ variant = "mobile" }: { variant?: BottomTabBarVariant } = {}) {
   const router = useRouter();
   const pathname = usePathname();
+  const { width } = useWindowDimensions();
+  const desktopWeb = isDesktopWebLayout(width);
   const { requestScrollToTop, scrollToTop } = useScrollToTopRegistry();
 
+  if (variant === "mobile" && desktopWeb) {
+    return null;
+  }
+
+  if (variant === "desktop" && !desktopWeb) {
+    return null;
+  }
+
   return (
-    <View style={styles.wrap}>
+    <View style={[styles.wrap, desktopWeb && styles.desktopWrap]}>
+      {desktopWeb ? (
+        <View style={styles.desktopBrand}>
+          <Text style={styles.desktopLogo}>WAYT</Text>
+          <Text style={styles.desktopTagline}>약속 이동을 한눈에</Text>
+        </View>
+      ) : null}
       {tabs.map((tab) => {
         const active = isBottomTabActive(pathname, tab.href);
         const Icon = tab.icon;
@@ -29,10 +48,15 @@ export function BottomTabBar() {
                 scrollToTop(pathname);
               }
             }}
-            style={({ pressed }) => [styles.item, pressed && styles.pressed]}
+            style={({ pressed }) => [
+              styles.item,
+              desktopWeb && styles.desktopItem,
+              desktopWeb && active && styles.desktopItemActive,
+              pressed && styles.pressed
+            ]}
           >
             <Icon color={active ? colors.primary : "#6F737A"} size={active ? 23 : 22} strokeWidth={2.25} />
-            <Text style={[styles.label, active && styles.active]}>{tab.label}</Text>
+            <Text style={[styles.label, desktopWeb && styles.desktopLabel, active && styles.active]}>{tab.label}</Text>
           </Pressable>
         );
       })}
@@ -61,6 +85,46 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: -6 },
     elevation: 12
   },
+  desktopWrap: {
+    top: 0,
+    right: undefined,
+    width: DESKTOP_SIDEBAR_WIDTH,
+    minHeight: "100%",
+    paddingTop: 30,
+    paddingBottom: 24,
+    paddingHorizontal: 18,
+    borderTopWidth: 0,
+    borderRightWidth: 1,
+    borderRightColor: "#E7EAF0",
+    backgroundColor: "#FFFFFF",
+    flexDirection: "column",
+    justifyContent: "flex-start",
+    alignItems: "stretch",
+    zIndex: 1000,
+    shadowOpacity: 0.05,
+    shadowRadius: 18,
+    shadowOffset: { width: 8, height: 0 },
+    elevation: 1000
+  },
+  desktopBrand: {
+    paddingHorizontal: 8,
+    paddingBottom: 24,
+    marginBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EEF1F5"
+  },
+  desktopLogo: {
+    color: colors.text,
+    fontSize: 25,
+    fontWeight: "900",
+    letterSpacing: 0
+  },
+  desktopTagline: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 5
+  },
   item: {
     minWidth: 54,
     height: 48,
@@ -69,10 +133,28 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 3
   },
+  desktopItem: {
+    width: "100%",
+    height: 50,
+    minWidth: 0,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    gap: 12,
+    marginTop: 4
+  },
+  desktopItemActive: {
+    backgroundColor: colors.primarySoft
+  },
   label: {
     color: "#6F737A",
     fontSize: 11,
     fontWeight: "600"
+  },
+  desktopLabel: {
+    fontSize: 15,
+    fontWeight: "800"
   },
   active: {
     color: colors.primary,

@@ -223,7 +223,23 @@ export default function ProfileScreen() {
 
   return (
     <>
-      <AppScreen withTabs>
+      <AppScreen
+        withTabs
+        desktopAside={
+          <ProfileDesktopAside
+            nickname={currentNickname}
+            waytId={user?.waytId ?? "@wayt"}
+            avatarUrl={user?.avatarUrl}
+            defaultTravelMode={user?.defaultTravelMode}
+            addressBookCount={addressBookCount}
+            savedPlaceCount={savedPlaceCount}
+            notificationSummary={notificationSummary}
+            onAddressBook={() => router.push("/address-book")}
+            onPlaces={() => router.push("/places")}
+            onNotifications={() => router.push("/notifications")}
+          />
+        }
+      >
         <TabHero title="내 정보" />
 
         <InfoCard>
@@ -369,6 +385,98 @@ export default function ProfileScreen() {
   );
 }
 
+function ProfileDesktopAside({
+  nickname,
+  waytId,
+  avatarUrl,
+  defaultTravelMode,
+  addressBookCount,
+  savedPlaceCount,
+  notificationSummary,
+  onAddressBook,
+  onPlaces,
+  onNotifications
+}: {
+  nickname: string;
+  waytId: string;
+  avatarUrl?: string;
+  defaultTravelMode?: TravelMode | null;
+  addressBookCount: number | null;
+  savedPlaceCount: number | null;
+  notificationSummary: string;
+  onAddressBook: () => void;
+  onPlaces: () => void;
+  onNotifications: () => void;
+}) {
+  return (
+    <View style={styles.desktopAsideStack}>
+      <View style={styles.desktopPanel}>
+        <View style={styles.desktopProfileHeader}>
+          <Avatar uri={avatarUrl} name={nickname || "W"} accent={colors.primary} size={58} />
+          <View style={styles.desktopProfileText}>
+            <Text style={styles.desktopProfileName} numberOfLines={1}>{nickname || "Wayt 사용자"}</Text>
+            <Text style={styles.desktopProfileHandle} numberOfLines={1}>{waytId}</Text>
+          </View>
+        </View>
+        <View style={styles.desktopTravelCard}>
+          <MapPin color={colors.primary} size={18} strokeWidth={2.4} />
+          <View style={styles.desktopTravelText}>
+            <Text style={styles.desktopTravelLabel}>기본 이동수단</Text>
+            <Text style={styles.desktopTravelValue}>
+              {defaultTravelMode ? travelModeLabel(defaultTravelMode) : "약속마다 선택"}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.desktopPanel}>
+        <Text style={styles.desktopPanelTitle}>계정 관리</Text>
+        <DesktopShortcut
+          icon={UsersRound}
+          label="주소록"
+          value={addressBookCount === null ? "빠른 초대" : addressBookCountLabel(addressBookCount)}
+          onPress={onAddressBook}
+        />
+        <DesktopShortcut
+          icon={MapPin}
+          label="저장 장소"
+          value={savedPlaceCount === null ? "즐겨찾는 장소" : savedPlaceCountLabel(savedPlaceCount)}
+          onPress={onPlaces}
+        />
+        <DesktopShortcut
+          icon={Bell}
+          label="알림"
+          value={notificationSummary}
+          onPress={onNotifications}
+        />
+      </View>
+    </View>
+  );
+}
+
+function DesktopShortcut({
+  icon: Icon,
+  label,
+  value,
+  onPress
+}: {
+  icon: typeof Bell;
+  label: string;
+  value: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [styles.desktopShortcut, pressed && styles.pressed]}>
+      <Icon color={colors.primary} size={19} strokeWidth={2.4} />
+      <View style={styles.desktopShortcutText}>
+        <Text style={styles.desktopShortcutLabel}>{label}</Text>
+        <Text style={styles.desktopShortcutValue} numberOfLines={1}>{value}</Text>
+      </View>
+      <ChevronRight color={colors.textSubtle} size={18} strokeWidth={2.4} />
+    </Pressable>
+  );
+}
+
 function extensionFromUri(uri: string) {
   const cleanUri = uri.split("?")[0] ?? uri;
   const extension = cleanUri.split(".").pop()?.toLowerCase();
@@ -397,6 +505,98 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 18
+  },
+  desktopAsideStack: {
+    gap: 18
+  },
+  desktopPanel: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E7EBF2",
+    backgroundColor: "#FFFFFF",
+    padding: 18,
+    shadowColor: "#101828",
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3
+  },
+  desktopPanelTitle: {
+    color: colors.text,
+    fontSize: 17,
+    fontWeight: "900",
+    marginBottom: 10
+  },
+  desktopProfileHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12
+  },
+  desktopProfileText: {
+    flex: 1,
+    minWidth: 0
+  },
+  desktopProfileName: {
+    color: colors.text,
+    fontSize: 19,
+    fontWeight: "900"
+  },
+  desktopProfileHandle: {
+    color: colors.primary,
+    fontSize: 14,
+    fontWeight: "800",
+    marginTop: 3
+  },
+  desktopTravelCard: {
+    marginTop: 16,
+    minHeight: 66,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#D9E7FF",
+    backgroundColor: "#F7FBFF",
+    paddingHorizontal: 13,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10
+  },
+  desktopTravelText: {
+    flex: 1,
+    minWidth: 0
+  },
+  desktopTravelLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "800"
+  },
+  desktopTravelValue: {
+    color: colors.text,
+    fontSize: 16,
+    fontWeight: "900",
+    marginTop: 3
+  },
+  desktopShortcut: {
+    minHeight: 54,
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 10,
+    marginTop: 4
+  },
+  desktopShortcutText: {
+    flex: 1,
+    minWidth: 0
+  },
+  desktopShortcutLabel: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "900"
+  },
+  desktopShortcutValue: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "700",
+    marginTop: 2
   },
   profileText: {
     flex: 1

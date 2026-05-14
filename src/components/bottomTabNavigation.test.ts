@@ -11,8 +11,13 @@ function assertEqual<T>(actual: T, expected: T, message: string) {
 }
 
 assertEqual(isBottomTabActive("/", "/"), true, "home tab is active only on home");
+assertEqual(isBottomTabActive("/appointments/new", "/"), true, "new appointment keeps the home tab active");
+assertEqual(isBottomTabActive("/appointments/calendar", "/"), true, "appointment calendar keeps the home tab active");
+assertEqual(isBottomTabActive("/appointments/abc123", "/"), true, "appointment detail keeps the home tab active");
 assertEqual(isBottomTabActive("/history/appointment-1", "/history"), true, "history detail keeps history tab active");
 assertEqual(isBottomTabActive("/appointments/next", "/appointments/next"), true, "next tab is active on next appointment");
+assertEqual(isBottomTabActive("/appointments/new", "/appointments/next"), false, "new appointment does not activate next tab");
+assertEqual(isBottomTabActive("/appointments/calendar", "/appointments/next"), false, "appointment calendar does not activate next tab");
 assertEqual(
   getBottomTabNavigationTarget("/appointments/next", "/appointments/next"),
   null,

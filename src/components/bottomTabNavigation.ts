@@ -1,12 +1,20 @@
 export function isBottomTabActive(pathname: string, href: string) {
   if (href === "/") {
-    return pathname === "/";
+    return pathname === "/" || isHomeOwnedAppointmentPath(pathname);
+  }
+
+  if (href === "/appointments/next") {
+    return pathname === href;
   }
 
   const section = href.split("/")[1];
   const sectionHref = section ? `/${section}` : href;
 
   return pathname === href || pathname.startsWith(sectionHref);
+}
+
+function isHomeOwnedAppointmentPath(pathname: string) {
+  return pathname.startsWith("/appointments/") && pathname !== "/appointments/next";
 }
 
 export function getBottomTabNavigationTarget(pathname: string, href: string) {

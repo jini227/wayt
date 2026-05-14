@@ -933,7 +933,27 @@ export default function LiveAppointmentScreen() {
   }
 
   return (
-    <AppScreen refreshing={refreshing} onRefresh={refreshAppointment}>
+    <AppScreen
+      refreshing={refreshing}
+      onRefresh={refreshAppointment}
+      desktopAside={
+        <AppointmentDesktopAside
+          title={liveAppointment.title}
+          scheduleLabel={mapMeta.scheduleLabel}
+          placeLabel={mapMeta.placeLabel}
+          locationLabel={locationSummary.label}
+          locationPublic={locationSummary.public}
+          penaltyLabel={formatPenaltyLabel(liveAppointment.penalty)}
+          hasPenalty={hasPenalty}
+          participantCount={displayParticipants.length}
+          etaLabel={myTravelInfoDisplay?.etaPrimaryLabel ?? countdownValue(liveAppointment.scheduledAt)}
+          canLeave={Boolean(myParticipant)}
+          actionDisabled={actionLoading !== null}
+          onInvite={() => router.push(`/appointments/${liveAppointment.id}/invite`)}
+          onLeave={handleLeave}
+        />
+      }
+    >
       <View style={styles.headerRow}>
         <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backButton}>
           <ChevronLeft color={colors.text} size={34} strokeWidth={2.3} />
@@ -973,6 +993,99 @@ export default function LiveAppointmentScreen() {
         onClear={() => void handleManualEtaClear()}
       />
     </AppScreen>
+  );
+}
+
+function AppointmentDesktopAside({
+  title,
+  scheduleLabel,
+  placeLabel,
+  locationLabel,
+  locationPublic,
+  penaltyLabel,
+  hasPenalty,
+  participantCount,
+  etaLabel,
+  canLeave,
+  actionDisabled,
+  onInvite,
+  onLeave
+}: {
+  title: string;
+  scheduleLabel: string;
+  placeLabel: string;
+  locationLabel: string;
+  locationPublic: boolean;
+  penaltyLabel: string;
+  hasPenalty: boolean;
+  participantCount: number;
+  etaLabel: string;
+  canLeave: boolean;
+  actionDisabled: boolean;
+  onInvite: () => void;
+  onLeave: () => void;
+}) {
+  return (
+    <View style={styles.desktopAsideStack}>
+      <View style={styles.desktopSummaryCard}>
+        <Text style={styles.desktopSummaryEyebrow}>약속 상세</Text>
+        <Text style={styles.desktopSummaryTitle} numberOfLines={2}>{title}</Text>
+        <View style={styles.desktopSummaryRows}>
+          <DesktopSummaryRow icon={Clock3} label="시간" value={scheduleLabel} />
+          <DesktopSummaryRow icon={MapPin} label="장소" value={placeLabel} />
+          <DesktopSummaryRow icon={locationPublic ? LockKeyholeOpen : LockKeyhole} label="위치" value={locationLabel} />
+          <DesktopSummaryRow icon={Gift} label="벌칙" value={hasPenalty ? penaltyLabel : "벌칙 없음"} />
+        </View>
+      </View>
+
+      <View style={styles.desktopSummaryCard}>
+        <Text style={styles.desktopSummaryEyebrow}>현재 상태</Text>
+        <View style={styles.desktopStatusGrid}>
+          <View style={styles.desktopStatusTile}>
+            <Text style={styles.desktopStatusValue}>{participantCount}</Text>
+            <Text style={styles.desktopStatusLabel}>참여자</Text>
+          </View>
+          <View style={styles.desktopStatusTile}>
+            <Text style={styles.desktopStatusValue} numberOfLines={1}>{etaLabel}</Text>
+            <Text style={styles.desktopStatusLabel}>내 이동</Text>
+          </View>
+        </View>
+        <Pressable onPress={onInvite} style={({ pressed }) => [styles.desktopInviteButton, pressed && styles.buttonPressed]}>
+          <Share2 color="#FFFFFF" size={18} strokeWidth={2.5} />
+          <Text style={styles.desktopInviteText}>초대 공유</Text>
+        </Pressable>
+        {canLeave ? (
+          <Pressable
+            onPress={onLeave}
+            disabled={actionDisabled}
+            style={({ pressed }) => [styles.desktopLeaveButton, pressed && !actionDisabled && styles.buttonPressed, actionDisabled && styles.disabledButton]}
+          >
+            <LogOut color={colors.danger} size={17} strokeWidth={2.4} />
+            <Text style={styles.desktopLeaveText}>약속 나가기</Text>
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+function DesktopSummaryRow({
+  icon: Icon,
+  label,
+  value
+}: {
+  icon: typeof Clock3;
+  label: string;
+  value: string;
+}) {
+  return (
+    <View style={styles.desktopSummaryRow}>
+      <Icon color={colors.primary} size={17} strokeWidth={2.4} />
+      <View style={styles.desktopSummaryRowText}>
+        <Text style={styles.desktopSummaryLabel}>{label}</Text>
+        <Text style={styles.desktopSummaryValue} numberOfLines={1}>{value}</Text>
+      </View>
+    </View>
   );
 }
 
@@ -1335,6 +1448,115 @@ function statusLogIconColor(message: string) {
 }
 
 const styles = StyleSheet.create({
+  desktopAsideStack: {
+    gap: 18
+  },
+  desktopSummaryCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#E7EBF2",
+    backgroundColor: "#FFFFFF",
+    padding: 18,
+    shadowColor: "#101828",
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 3
+  },
+  desktopSummaryEyebrow: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: "900",
+    marginBottom: 8
+  },
+  desktopSummaryTitle: {
+    color: colors.text,
+    fontSize: 21,
+    lineHeight: 27,
+    fontWeight: "900"
+  },
+  desktopSummaryRows: {
+    gap: 12,
+    marginTop: 16
+  },
+  desktopSummaryRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10
+  },
+  desktopSummaryRowText: {
+    flex: 1,
+    minWidth: 0
+  },
+  desktopSummaryLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "800"
+  },
+  desktopSummaryValue: {
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: "800",
+    marginTop: 2
+  },
+  desktopStatusGrid: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 10
+  },
+  desktopStatusTile: {
+    flex: 1,
+    minHeight: 74,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#EEF1F5",
+    backgroundColor: "#F8FAFD",
+    justifyContent: "center",
+    paddingHorizontal: 12
+  },
+  desktopStatusValue: {
+    color: colors.text,
+    fontSize: 19,
+    fontWeight: "900"
+  },
+  desktopStatusLabel: {
+    color: colors.textMuted,
+    fontSize: 12,
+    fontWeight: "800",
+    marginTop: 3
+  },
+  desktopInviteButton: {
+    minHeight: 46,
+    marginTop: 16,
+    borderRadius: 12,
+    backgroundColor: colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7
+  },
+  desktopInviteText: {
+    color: "#FFFFFF",
+    fontSize: 15,
+    fontWeight: "900"
+  },
+  desktopLeaveButton: {
+    minHeight: 44,
+    marginTop: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#FFD1CD",
+    backgroundColor: colors.dangerSoft,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7
+  },
+  desktopLeaveText: {
+    color: colors.danger,
+    fontSize: 14,
+    fontWeight: "900"
+  },
   headerRow: {
     minHeight: 78,
     flexDirection: "row",

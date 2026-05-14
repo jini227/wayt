@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, type MutableRefObject, type ReactNode, type Ref } from "react";
 import { useFocusEffect, usePathname } from "expo-router";
 import type { ScrollViewProps } from "react-native";
-import { KeyboardAvoidingView, PanResponder, Platform, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { KeyboardAvoidingView, PanResponder, Platform, RefreshControl, ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "../theme";
 import {
@@ -10,6 +10,14 @@ import {
 } from "../gestures/dismissDragGesture";
 import { useScrollToTopRegistry } from "./ScrollToTopRegistry";
 import { scrollVisibleContentToTop } from "./scrollToTop";
+import {
+  DESKTOP_ASIDE_WIDTH,
+  DESKTOP_CONTENT_MAX_WIDTH,
+  DESKTOP_SIDEBAR_WIDTH,
+  DESKTOP_SINGLE_COLUMN_MAX_WIDTH,
+  isDesktopWebLayout,
+  shouldShowDesktopSideNav
+} from "./webDesktopLayout";
 
 type AppScreenProps = {
   children: ReactNode;
@@ -22,6 +30,7 @@ type AppScreenProps = {
   refreshing?: boolean;
   onRefresh?: () => void;
   onPullDownDismiss?: () => void;
+  desktopAside?: ReactNode;
 };
 
 export function AppScreen({
@@ -34,9 +43,13 @@ export function AppScreen({
   keyboardAvoiding,
   refreshing,
   onRefresh,
-  onPullDownDismiss
+  onPullDownDismiss,
+  desktopAside
 }: AppScreenProps) {
   const pathname = usePathname();
+  const { width } = useWindowDimensions();
+  const desktopWeb = isDesktopWebLayout(width);
+  const desktopSidebar = Boolean(desktopWeb && shouldShowDesktopSideNav(pathname));
   const internalScrollRef = useRef<ScrollView | null>(null);
   const scrollYRef = useRef(0);
   const { consumeScrollToTopRequest, registerScrollToTop } = useScrollToTopRegistry();
@@ -108,8 +121,26 @@ export function AppScreen({
     }, [consumeScrollToTopRequest, noScroll, pathname, withTabs])
   );
 
+  const content = desktopWeb ? (
+    <View style={[styles.desktopGrid, !desktopAside && styles.desktopGridSingle]}>
+      <View style={styles.desktopMain}>{children}</View>
+      {desktopAside ? <View style={styles.desktopAside}>{desktopAside}</View> : null}
+    </View>
+  ) : (
+    children
+  );
+
   const body = noScroll ? (
-    <View style={[styles.content, styles.noScrollContent, withTabs && styles.withTabs]}>{children}</View>
+    <View
+      style={[
+        styles.content,
+        styles.noScrollContent,
+        withTabs && (desktopWeb ? styles.withDesktopTabs : styles.withTabs),
+        desktopWeb && styles.desktopContent
+      ]}
+    >
+      {content}
+    </View>
   ) : (
     <ScrollView
       {...pullDownDismissHandlers}
@@ -134,16 +165,17 @@ export function AppScreen({
       }
       contentContainerStyle={[
         styles.content,
-        withTabs ? styles.withTabs : undefined,
-        footer ? styles.withFooter : undefined
+        withTabs ? (desktopWeb ? styles.withDesktopTabs : styles.withTabs) : undefined,
+        desktopWeb && styles.desktopContent,
+        footer ? (desktopWeb ? styles.withDesktopFooter : styles.withFooter) : undefined
       ]}
     >
-      {children}
+      {content}
     </ScrollView>
   );
 
   return (
-    <SafeAreaView style={styles.safe} edges={["top", "left", "right"]}>
+    <SafeAreaView style={[styles.safe, desktopWeb && styles.desktopPage, desktopSidebar && styles.desktopSafe]} edges={["top", "left", "right"]}>
       {keyboardAvoiding ? (
         <KeyboardAvoidingView
           style={styles.body}
@@ -194,6 +226,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background
   },
+  desktopPage: {
+    backgroundColor: "#F6F8FB"
+  },
+  desktopSafe: {
+    paddingLeft: DESKTOP_SIDEBAR_WIDTH
+  },
   body: {
     flex: 1
   },
@@ -208,7 +246,36 @@ const styles = StyleSheet.create({
   withTabs: {
     paddingBottom: 112
   },
+  withDesktopTabs: {
+    paddingBottom: 48
+  },
   withFooter: {
     paddingBottom: 112
+  },
+  withDesktopFooter: {
+    paddingBottom: 24
+  },
+  desktopContent: {
+    paddingHorizontal: 40,
+    paddingTop: 34
+  },
+  desktopGrid: {
+    width: "100%",
+    maxWidth: DESKTOP_CONTENT_MAX_WIDTH,
+    alignSelf: "center",
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 24
+  },
+  desktopGridSingle: {
+    maxWidth: DESKTOP_SINGLE_COLUMN_MAX_WIDTH
+  },
+  desktopMain: {
+    flex: 1,
+    minWidth: 0
+  },
+  desktopAside: {
+    width: DESKTOP_ASIDE_WIDTH,
+    flexShrink: 0
   }
 });

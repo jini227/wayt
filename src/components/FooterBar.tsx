@@ -1,8 +1,12 @@
 import type { ReactNode } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { DESKTOP_SINGLE_COLUMN_MAX_WIDTH, isDesktopWebLayout } from "./webDesktopLayout";
 
 export function FooterBar({ children }: { children: ReactNode }) {
-  return <View style={styles.footer}>{children}</View>;
+  const { width } = useWindowDimensions();
+  const desktopWeb = isDesktopWebLayout(width);
+
+  return <View style={[styles.footer, desktopWeb && styles.desktopFooter]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
@@ -22,5 +26,18 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     shadowOffset: { width: 0, height: -5 },
     elevation: 10
+  },
+  desktopFooter: {
+    position: "relative",
+    width: "100%",
+    maxWidth: DESKTOP_SINGLE_COLUMN_MAX_WIDTH,
+    alignSelf: "center",
+    paddingHorizontal: 40,
+    paddingTop: 16,
+    paddingBottom: 26,
+    borderTopWidth: 0,
+    backgroundColor: "transparent",
+    shadowOpacity: 0,
+    elevation: 0
   }
 });

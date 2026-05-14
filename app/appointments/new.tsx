@@ -1,7 +1,7 @@
 import { createElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import type { NativeScrollEvent, NativeSyntheticEvent, StyleProp, ViewStyle } from "react-native";
-import { ActivityIndicator, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from "react-native";
 import { usePreventRemove } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { WebView } from "react-native-webview";
@@ -27,6 +27,7 @@ import { AppScreen } from "../../src/components/AppScreen";
 import { Header, InfoCard } from "../../src/components/Cards";
 import { PrimaryButton } from "../../src/components/Buttons";
 import { FooterBar } from "../../src/components/FooterBar";
+import { isDesktopWebLayout } from "../../src/components/webDesktopLayout";
 import { TimeWheelPicker } from "../../src/components/TimeWheelPicker";
 import { createNaverMapFrameUrl } from "../../src/components/naverMapFrameUrl";
 import { apiGetAuthenticated, apiPostAuthenticated } from "../../src/api/client";
@@ -139,6 +140,8 @@ export default function NewAppointmentScreen() {
   const navigation = useNavigation();
   const { user, updateProfile } = useAuth();
   const { showToast, showDialog } = useAppFeedback();
+  const { width } = useWindowDimensions();
+  const desktopWeb = isDesktopWebLayout(width);
   const scrollRef = useRef<ScrollView>(null);
   const submitInFlightRef = useRef(false);
   const pendingExitActionRef = useRef<Parameters<typeof navigation.dispatch>[0] | null>(null);
@@ -753,6 +756,7 @@ export default function NewAppointmentScreen() {
       </AppScreen>
       <PickerModal
         activePicker={activePicker}
+        desktopWeb={desktopWeb}
         now={now}
         today={today}
         visibleMonth={visibleMonth}
@@ -1377,6 +1381,7 @@ function parseMapMessage(data: unknown): Coordinate | null {
 }
 
 function CalendarPicker({
+  desktopWeb,
   now,
   today,
   visibleMonth,
@@ -1384,6 +1389,7 @@ function CalendarPicker({
   onMonthChange,
   onSelectDate
 }: {
+  desktopWeb: boolean;
   now: Date;
   today: Date;
   visibleMonth: Date;
@@ -1393,7 +1399,7 @@ function CalendarPicker({
 }) {
   const days = calendarDays(visibleMonth);
   return (
-    <View style={styles.calendar}>
+    <View style={[styles.calendar, desktopWeb ? styles.desktopCalendar : null]}>
       <View style={styles.calendarHeader}>
         <Pressable onPress={() => onMonthChange(addMonths(visibleMonth, -1))} style={styles.monthButton}>
           <ChevronLeft color={colors.textMuted} size={20} strokeWidth={2.3} />
@@ -1424,6 +1430,7 @@ function CalendarPicker({
               disabled={disabled}
               style={({ pressed }) => [
                 styles.dayCell,
+                desktopWeb ? styles.desktopDayCell : null,
                 !inMonth && styles.mutedDay,
                 disabled && styles.disabledDay,
                 pressed && !disabled && styles.pressed
@@ -1444,6 +1451,7 @@ function CalendarPicker({
 
 function PickerModal({
   activePicker,
+  desktopWeb,
   now,
   today,
   visibleMonth,
@@ -1461,6 +1469,7 @@ function PickerModal({
   onSelectGrace
 }: {
   activePicker: PickerMode | null;
+  desktopWeb: boolean;
   now: Date;
   today: Date;
   visibleMonth: Date;
@@ -1494,9 +1503,9 @@ function PickerModal({
 
   return (
     <Modal transparent visible={activePicker !== null} animationType="fade" onRequestClose={onClose}>
-      <View style={styles.modalOverlay}>
+      <View style={[styles.modalOverlay, desktopWeb ? styles.desktopModalOverlay : null]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.modalSheet} {...modalSheetPanHandlers}>
+        <View style={[styles.modalSheet, desktopWeb ? styles.desktopModalSheet : null]} {...modalSheetPanHandlers}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{activePicker ? pickerTitle(activePicker) : ""}</Text>
             <Pressable onPress={onClose} hitSlop={10}>
@@ -1506,6 +1515,7 @@ function PickerModal({
           {activePicker ? (
             <SchedulePickerPanel
               activePicker={activePicker}
+              desktopWeb={desktopWeb}
               now={now}
               today={today}
               visibleMonth={visibleMonth}
@@ -1530,6 +1540,7 @@ function PickerModal({
 
 function SchedulePickerPanel({
   activePicker,
+  desktopWeb,
   now,
   today,
   visibleMonth,
@@ -1546,6 +1557,7 @@ function SchedulePickerPanel({
   onSelectGrace
 }: {
   activePicker: PickerMode;
+  desktopWeb: boolean;
   now: Date;
   today: Date;
   visibleMonth: Date;
@@ -1565,6 +1577,7 @@ function SchedulePickerPanel({
     <View style={styles.pickerPanel}>
       {activePicker === "date" ? (
         <CalendarPicker
+          desktopWeb={desktopWeb}
           now={now}
           today={today}
           visibleMonth={visibleMonth}
@@ -2505,6 +2518,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingBottom: 18
   },
+  desktopModalOverlay: {
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingBottom: 24
+  },
   modalSheet: {
     borderRadius: 22,
     backgroundColor: "#FFFFFF",
@@ -2514,6 +2533,14 @@ const styles = StyleSheet.create({
     shadowRadius: 24,
     shadowOffset: { width: 0, height: 12 },
     elevation: 12
+  },
+  desktopModalSheet: {
+    width: 440,
+    maxWidth: "100%",
+    alignSelf: "center",
+    borderRadius: 22,
+    padding: 18,
+    transform: [{ translateX: 260 }]
   },
   modalHeader: {
     minHeight: 34,
@@ -2572,6 +2599,9 @@ const styles = StyleSheet.create({
   calendar: {
     gap: 10
   },
+  desktopCalendar: {
+    gap: 12
+  },
   calendarHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -2613,6 +2643,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 10
+  },
+  desktopDayCell: {
+    height: 44,
+    aspectRatio: undefined
   },
   dayInner: {
     width: 42,
