@@ -214,6 +214,7 @@ const styles = StyleSheet.create({
   },
   inputBox: {
     minHeight: 52,
+    minWidth: 0,
     borderRadius: 13,
     borderWidth: 1,
     borderColor: "#DADDE3",
@@ -228,6 +229,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
     flex: 1,
+    minWidth: 0,
     paddingVertical: 0
   },
   addButton: {
