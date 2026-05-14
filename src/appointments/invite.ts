@@ -103,6 +103,68 @@ export function createInviteShareMessage({
   return `${appointmentTitle} 초대 링크\n${url}`;
 }
 
+export function createPublicInviteUrl({
+  token,
+  currentHref,
+  fallbackUrl,
+}: {
+  token: string;
+  currentHref?: string;
+  fallbackUrl?: string;
+}) {
+  const encodedToken = encodeURIComponent(token);
+  const currentOrigin = originFromUrl(currentHref);
+  if (currentOrigin) {
+    return `${currentOrigin}${webBasePathFromUrl(currentHref)}/invite/${encodedToken}`;
+  }
+
+  const fallback = rewriteApiInviteUrl(fallbackUrl, encodedToken);
+  if (fallback) {
+    return fallback;
+  }
+
+  return `/invite/${encodedToken}`;
+}
+
+function rewriteApiInviteUrl(value: string | undefined, encodedToken: string) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    const url = new URL(value);
+    url.pathname = url.pathname.replace(/\/wayt-api\/invite\/[^/]+$/, `/wayt/invite/${encodedToken}`);
+    return url.toString();
+  } catch {
+    return value;
+  }
+}
+
+function originFromUrl(value: string | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function webBasePathFromUrl(value: string | undefined) {
+  if (!value) {
+    return "";
+  }
+
+  try {
+    const path = new URL(value).pathname;
+    return path === "/wayt" || path.startsWith("/wayt/") ? "/wayt" : "";
+  } catch {
+    return "";
+  }
+}
+
 export function getSelectedInviteFooterLabel(selectedCount: number) {
   return selectedCount > 0 ? `선택한 ${selectedCount}명 초대` : null;
 }

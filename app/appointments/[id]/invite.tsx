@@ -17,6 +17,7 @@ import {
   buildSentInviteRows,
   buildWaytIdSuggestionRows,
   createInviteShareMessage,
+  createPublicInviteUrl,
   getSelectedInviteFooterLabel,
   loadInviteScreenData,
   normalizeWaytIdInput,
@@ -403,7 +404,12 @@ export default function InviteScreen() {
   const handleCopyLink = useCallback(async () => {
     try {
       const invite = await ensureLinkInvite();
-      await Clipboard.setStringAsync(invite.url);
+      const inviteUrl = createPublicInviteUrl({
+        token: invite.token,
+        currentHref: typeof window === "undefined" ? undefined : window.location.href,
+        fallbackUrl: invite.url
+      });
+      await Clipboard.setStringAsync(inviteUrl);
       showToast({ title: "초대 링크를 복사했어요." });
     } catch (copyError) {
       showDialog({
@@ -417,12 +423,17 @@ export default function InviteScreen() {
   const handleShareLink = useCallback(async () => {
     try {
       const invite = await ensureLinkInvite();
+      const inviteUrl = createPublicInviteUrl({
+        token: invite.token,
+        currentHref: typeof window === "undefined" ? undefined : window.location.href,
+        fallbackUrl: invite.url
+      });
       await Share.share({
         title: appointment?.title ?? "Wayt 초대",
-        url: invite.url,
+        url: inviteUrl,
         message: createInviteShareMessage({
           appointmentTitle: appointment?.title ?? invite.appointmentTitle,
-          url: invite.url
+          url: inviteUrl
         })
       });
     } catch (shareError) {

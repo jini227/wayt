@@ -6,6 +6,7 @@ import {
   buildSentInviteRows,
   buildWaytIdSuggestionRows,
   createInviteShareMessage,
+  createPublicInviteUrl,
   getSelectedInviteFooterLabel,
   loadInviteScreenData,
   normalizeWaytIdInput
@@ -98,6 +99,25 @@ assertEqual(
   }),
   "홍대 저녁 약속 초대 링크\nhttps://wayt.app/invite/AB12CD",
   "share message uses the generated invite URL"
+);
+
+assertEqual(
+  createPublicInviteUrl({
+    token: "851187E96D4B",
+    currentHref: "http://52.79.233.46/wayt/appointments/abc/invite",
+    fallbackUrl: "http://52.79.233.46/wayt-api/invite/851187E96D4B"
+  }),
+  "http://52.79.233.46/wayt/invite/851187E96D4B",
+  "public invite links use the web app route instead of the API route"
+);
+
+assertEqual(
+  createPublicInviteUrl({
+    token: "A B",
+    fallbackUrl: "http://52.79.233.46/wayt-api/invite/OLD"
+  }),
+  "http://52.79.233.46/wayt/invite/A%20B",
+  "fallback invite links rewrite API invite URLs to the web route"
 );
 
 assertDeepEqual(
