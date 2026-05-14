@@ -11,6 +11,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
+    "export:web": "expo export --platform web --output-dir dist-web",
     "build:android:preview": "eas build --profile preview --platform android",
     "build:android": "eas build --profile production --platform android",
     "build:ios": "eas build --profile production --platform ios"

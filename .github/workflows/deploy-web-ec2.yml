@@ -1,0 +1,66 @@
+name: Deploy web to EC2
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      EXPO_WEB_BASE_URL: /wayt
+      EXPO_PUBLIC_APP_ENV: production
+      EXPO_PUBLIC_API_BASE_URL: http://52.79.233.46/wayt-api/api
+      EXPO_PUBLIC_KAKAO_REST_API_KEY: ${{ secrets.EXPO_PUBLIC_KAKAO_REST_API_KEY }}
+      EXPO_PUBLIC_KAKAO_JAVASCRIPT_KEY: ${{ secrets.EXPO_PUBLIC_KAKAO_JAVASCRIPT_KEY }}
+      EXPO_PUBLIC_NAVER_MAPS_NCP_KEY_ID: ${{ secrets.EXPO_PUBLIC_NAVER_MAPS_NCP_KEY_ID }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate required secrets
+        shell: bash
+        run: |
+          test -n "${{ secrets.EC2_SSH_PRIVATE_KEY }}" || (echo "Missing EC2_SSH_PRIVATE_KEY" && exit 1)
+          test -n "$EXPO_PUBLIC_NAVER_MAPS_NCP_KEY_ID" || (echo "Missing EXPO_PUBLIC_NAVER_MAPS_NCP_KEY_ID" && exit 1)
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Export web build
+        run: npm run export:web
+
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/wayt-ec2
+          chmod 600 ~/.ssh/wayt-ec2
+          ssh-keyscan -H 52.79.233.46 >> ~/.ssh/known_hosts
+
+      - name: Prepare web root
+        run: |
+          ssh -i ~/.ssh/wayt-ec2 ec2-user@52.79.233.46 \
+            'sudo mkdir -p /var/www/wayt && sudo chown -R ec2-user:ec2-user /var/www/wayt'
+
+      - name: Upload web build
+        run: |
+          rsync -az --delete -e "ssh -i ~/.ssh/wayt-ec2" dist-web/ ec2-user@52.79.233.46:/var/www/wayt/
+
+      - name: Reload nginx
+        run: |
+          ssh -i ~/.ssh/wayt-ec2 ec2-user@52.79.233.46 'sudo nginx -t && sudo systemctl reload nginx'

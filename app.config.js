@@ -1,5 +1,5 @@
-require("dotenv").config({ path: ".env.local" });
-require("dotenv").config();
+require("dotenv").config({ path: ".env.local", quiet: true });
+require("dotenv").config({ quiet: true });
 
 const required = (name) => {
   const value = process.env[name];
@@ -9,7 +9,8 @@ const required = (name) => {
   return value;
 };
 
-const kakaoNativeAppKey = required("EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY");
+const isWebExport = process.env.EXPO_WEB_BASE_URL || process.env.npm_lifecycle_event === "export:web";
+const kakaoNativeAppKey = isWebExport ? process.env.EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY || "web-only" : required("EXPO_PUBLIC_KAKAO_NATIVE_APP_KEY");
 const naverMapsNcpKeyId = required("EXPO_PUBLIC_NAVER_MAPS_NCP_KEY_ID");
 
 module.exports = {
@@ -54,6 +55,9 @@ module.exports = {
     },
     web: {
       favicon: "./assets/wayt-favicon.png"
+    },
+    experiments: {
+      baseUrl: process.env.EXPO_WEB_BASE_URL
     },
     extra: {
       eas: {
