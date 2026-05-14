@@ -50,17 +50,17 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "${{ secrets.EC2_SSH_PRIVATE_KEY }}" > ~/.ssh/wayt-ec2
           chmod 600 ~/.ssh/wayt-ec2
-          ssh-keyscan -H 52.79.233.46 >> ~/.ssh/known_hosts
+          ssh-keyscan -T 10 -H 52.79.233.46 >> ~/.ssh/known_hosts || true
 
       - name: Prepare web root
         run: |
-          ssh -i ~/.ssh/wayt-ec2 ec2-user@52.79.233.46 \
+          ssh -i ~/.ssh/wayt-ec2 -o StrictHostKeyChecking=accept-new ec2-user@52.79.233.46 \
             'sudo mkdir -p /var/www/wayt && sudo chown -R ec2-user:ec2-user /var/www/wayt'
 
       - name: Upload web build
         run: |
-          rsync -az --delete -e "ssh -i ~/.ssh/wayt-ec2" dist-web/ ec2-user@52.79.233.46:/var/www/wayt/
+          rsync -az --delete -e "ssh -i ~/.ssh/wayt-ec2 -o StrictHostKeyChecking=accept-new" dist-web/ ec2-user@52.79.233.46:/var/www/wayt/
 
       - name: Reload nginx
         run: |
-          ssh -i ~/.ssh/wayt-ec2 ec2-user@52.79.233.46 'sudo nginx -t && sudo systemctl reload nginx'
+          ssh -i ~/.ssh/wayt-ec2 -o StrictHostKeyChecking=accept-new ec2-user@52.79.233.46 'sudo nginx -t && sudo systemctl reload nginx'
