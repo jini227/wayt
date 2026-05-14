@@ -94,7 +94,7 @@ export default function ProfileScreen() {
       return;
     }
     await Clipboard.setStringAsync(user.waytId);
-    showToast({ title: "고유 아이디를 복사했어요." });
+    showToast({ title: "아이디를 복사했어요." });
   };
 
   const handlePickAvatar = async () => {

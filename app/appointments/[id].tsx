@@ -909,7 +909,7 @@ export default function LiveAppointmentScreen() {
       case "lockedNotice":
         return (
           <InfoCard key={section} style={styles.lockedCard}>
-            <LockKeyhole color={colors.textMuted} size={23} strokeWidth={2.3} />
+            <LockKeyhole color={colors.textMuted} size={20} strokeWidth={2.3} />
             <View style={styles.lockedTextBlock}>
               <Text style={styles.lockedTitle}>위치 공개 전입니다</Text>
               <Text style={styles.lockedText}>{formatShareOffset(liveAppointment.shareStartOffsetMinutes)} 상태 공유가 열려요</Text>
@@ -1884,11 +1884,12 @@ const styles = StyleSheet.create({
     paddingBottom: 4
   },
   lockedCard: {
-    marginTop: 16,
+    marginTop: 12,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    paddingVertical: 18
+    gap: 9,
+    paddingHorizontal: 16,
+    paddingVertical: 12
   },
   lockedTextBlock: {
     flex: 1,
@@ -1896,14 +1897,14 @@ const styles = StyleSheet.create({
   },
   lockedTitle: {
     color: colors.text,
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: "900"
   },
   lockedText: {
     color: colors.textMuted,
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: "600",
-    marginTop: 4
+    marginTop: 2
   },
   etaModalOverlay: {
     flex: 1,

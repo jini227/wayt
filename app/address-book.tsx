@@ -58,7 +58,7 @@ export default function AddressBookScreen() {
   const handleAdd = useCallback(async () => {
     const normalizedWaytId = normalizeWaytIdInput(targetWaytId);
     if (!normalizedWaytId) {
-      showToast({ title: "추가할 고유 아이디를 입력해 주세요.", tone: "warning" });
+      showToast({ title: "추가할 아이디를 입력해 주세요.", tone: "warning" });
       return;
     }
 
@@ -125,7 +125,7 @@ export default function AddressBookScreen() {
             <TextInput
               value={targetWaytId}
               onChangeText={setTargetWaytId}
-              placeholder="고유 아이디 입력"
+              placeholder="아이디 입력"
               placeholderTextColor={colors.textSubtle}
               autoCapitalize="none"
               autoCorrect={false}

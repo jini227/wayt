@@ -20,8 +20,18 @@ assert.deepEqual(
     hasMemo: true,
     locationPublic: false
   }),
-  ["map", "appointmentStatus", "participants", "memo", "lockedNotice"],
-  "guests without a participant record should not see personal travel controls"
+  ["map", "appointmentStatus", "lockedNotice", "participants", "memo"],
+  "locked location notice should appear before the participant list"
+);
+
+assert.deepEqual(
+  createLiveAppointmentSectionOrder({
+    hasMyParticipant: true,
+    hasMemo: false,
+    locationPublic: false
+  }),
+  ["map", "appointmentStatus", "lockedNotice", "participants", "myTravelInfo"],
+  "private appointments should keep the locked notice above participant rows"
 );
 
 assert.deepEqual(

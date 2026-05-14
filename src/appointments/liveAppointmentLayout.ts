@@ -33,6 +33,17 @@ export function createLiveAppointmentSectionOrder({
   hasMemo: boolean;
   locationPublic: boolean;
 }): LiveAppointmentSection[] {
+  if (!locationPublic) {
+    return [
+      "map",
+      "appointmentStatus",
+      "lockedNotice",
+      "participants",
+      ...(hasMyParticipant ? ["myTravelInfo" as const] : []),
+      ...(hasMemo ? ["memo" as const] : [])
+    ];
+  }
+
   return [
     "map",
     "appointmentStatus",

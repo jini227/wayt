@@ -52,9 +52,23 @@ assert.deepEqual(
   "no travel mode is highlighted when the saved default is empty"
 );
 assert.equal(hasActiveBackground(choices[4]), true, "the skip choice is highlighted when the saved default is empty");
+assert.deepEqual(
+  choices.slice(0, 4).map((choice) => styleValue(choice, "flexBasis")),
+  ["47%", "47%", "47%", "47%"],
+  "travel mode choices use the same two-column basis regardless of label length"
+);
+assert.deepEqual(
+  choices.slice(0, 4).map((choice) => styleValue(choice, "minWidth")),
+  [0, 0, 0, 0],
+  "travel mode choices can shrink from their text content instead of growing unevenly"
+);
 
 function hasActiveBackground(node) {
   return styleItems(node).some((style) => style?.backgroundColor === colors.primarySoft);
+}
+
+function styleValue(node, key) {
+  return styleItems(node).find((style) => Object.prototype.hasOwnProperty.call(style, key))?.[key];
 }
 
 function styleItems(node) {

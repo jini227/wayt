@@ -91,7 +91,8 @@ const styles = StyleSheet.create({
   },
   option: {
     minHeight: 48,
-    minWidth: "47%",
+    minWidth: 0,
+    flexBasis: "47%",
     flexGrow: 1,
     borderRadius: 12,
     borderWidth: 1,
