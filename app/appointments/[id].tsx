@@ -1336,7 +1336,7 @@ function statusLogIconColor(message: string) {
 
 const styles = StyleSheet.create({
   headerRow: {
-    minHeight: 112,
+    minHeight: 78,
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12

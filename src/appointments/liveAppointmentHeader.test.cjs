@@ -5,6 +5,7 @@ const path = require("node:path");
 const root = path.join(__dirname, "..", "..");
 const detailPath = path.join(root, "app", "appointments", "[id].tsx");
 const source = fs.readFileSync(detailPath, "utf8");
+const headerRowStyle = source.match(/headerRow:\s*\{[\s\S]*?minHeight:\s*(\d+)/);
 
 assert.match(
   source,
@@ -28,4 +29,10 @@ assert.match(
   source,
   /scheduleLabel=\{mapMeta\.scheduleLabel\}[\s\S]*placeLabel=\{mapMeta\.placeLabel\}/,
   "appointment detail should keep the schedule and place labels near the map"
+);
+
+assert.ok(headerRowStyle, "appointment detail should define a reusable header row style");
+assert.ok(
+  Number(headerRowStyle[1]) <= 84,
+  "appointment detail header should use compact vertical spacing after removing the duplicated time and place rows"
 );
