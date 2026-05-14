@@ -1,7 +1,7 @@
 import { createElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import type { NativeScrollEvent, NativeSyntheticEvent, StyleProp, ViewStyle } from "react-native";
-import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Modal, PanResponder, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { usePreventRemove } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { WebView } from "react-native-webview";
@@ -41,6 +41,10 @@ import {
   shouldConfirmAppointmentCreateExit,
   shouldPreventAppointmentCreateRemove
 } from "../../src/appointments/newAppointmentDraft";
+import {
+  shouldDismissPickerDrag,
+  shouldStartPickerDismissDrag
+} from "../../src/appointments/pickerDismissGesture";
 import {
   APPOINTMENT_MEMO_MAX_LENGTH,
   APPOINTMENT_PENALTY_MAX_LENGTH,
@@ -1463,11 +1467,26 @@ function PickerModal({
   onSelectRadius: (meters: number) => void;
   onSelectGrace: (minutes: number) => void;
 }) {
+  const pickerDismissPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          activePicker === "date" && shouldStartPickerDismissDrag(gestureState),
+        onPanResponderRelease: (_, gestureState) => {
+          if (activePicker === "date" && shouldDismissPickerDrag(gestureState)) {
+            onClose();
+          }
+        }
+      }),
+    [activePicker, onClose]
+  );
+  const modalSheetPanHandlers = activePicker === "date" ? pickerDismissPanResponder.panHandlers : {};
+
   return (
     <Modal transparent visible={activePicker !== null} animationType="fade" onRequestClose={onClose}>
       <View style={styles.modalOverlay}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
-        <View style={styles.modalSheet}>
+        <View style={styles.modalSheet} {...modalSheetPanHandlers}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>{activePicker ? pickerTitle(activePicker) : ""}</Text>
             <Pressable onPress={onClose} hitSlop={10}>

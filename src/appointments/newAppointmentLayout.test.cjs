@@ -74,3 +74,11 @@ assert(
   searchAccessoryStart > searchBoxEnd,
   "saved place search accessory is rendered outside and to the right of the input box"
 );
+
+assert(
+  source.includes("PanResponder.create") &&
+    source.includes("shouldStartPickerDismissDrag") &&
+    source.includes("shouldDismissPickerDrag") &&
+    source.includes("activePicker === \"date\" ? pickerDismissPanResponder.panHandlers : {}"),
+  "date picker modal wires a downward drag gesture to dismiss the calendar sheet"
+);
