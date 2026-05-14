@@ -6,22 +6,26 @@ const root = path.join(__dirname, "..", "..");
 const detailPath = path.join(root, "app", "appointments", "[id].tsx");
 const source = fs.readFileSync(detailPath, "utf8");
 
-const headerMetaPattern = /formatAppointmentScheduleLabel\(liveAppointment\.scheduledAt\)[\s\S]*liveAppointment\.placeName[\s\S]*countdownPrefix\(liveAppointment\.scheduledAt\)/;
+assert.match(
+  source,
+  /liveAppointment\.title[\s\S]*countdownPrefix\(liveAppointment\.scheduledAt\)/,
+  "appointment detail header should keep the countdown directly below the title"
+);
+
+assert.doesNotMatch(
+  source,
+  /<Text style=\{styles\.scheduleLabel\}[\s\S]*formatAppointmentScheduleLabel\(liveAppointment\.scheduledAt\)[\s\S]*<\/Text>/,
+  "appointment detail header should not repeat the scheduled time above the countdown"
+);
+
+assert.doesNotMatch(
+  source,
+  /<Text style=\{styles\.scheduleLabel\}[\s\S]*liveAppointment\.placeName[\s\S]*<\/Text>/,
+  "appointment detail header should not repeat the place above the countdown"
+);
 
 assert.match(
   source,
-  headerMetaPattern,
-  "appointment detail header should show the place directly below the scheduled time and above the countdown"
-);
-
-assert.equal(
-  [...source.matchAll(/style=\{styles\.scheduleLabel\}/g)].length >= 2,
-  true,
-  "appointment detail time and place should share the same list-style meta text style"
-);
-
-assert.match(
-  source,
-  /scheduleLabel:\s*\{[\s\S]*color:\s*colors\.textMuted,[\s\S]*fontSize:\s*16,[\s\S]*fontWeight:\s*"500"/,
-  "appointment detail meta text should match the list font size, weight, and muted tone"
+  /scheduleLabel=\{mapMeta\.scheduleLabel\}[\s\S]*placeLabel=\{mapMeta\.placeLabel\}/,
+  "appointment detail should keep the schedule and place labels near the map"
 );
