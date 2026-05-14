@@ -1,5 +1,5 @@
 import { env } from "../config/env";
-import * as SecureStore from "expo-secure-store";
+import { getAuthItem } from "../auth/authStorage";
 import { apiErrorMessage } from "./errors";
 
 const ACCESS_TOKEN_KEY = "wayt.accessToken";
@@ -22,7 +22,7 @@ export async function apiPost<TResponse, TBody extends object>(path: string, bod
 }
 
 export async function apiGetAuthenticated<TResponse>(path: string): Promise<TResponse> {
-  const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+  const accessToken = await getAuthItem(ACCESS_TOKEN_KEY);
   if (!accessToken) {
     throw new Error("Login is required");
   }
@@ -45,7 +45,7 @@ export async function apiPostAuthenticated<TResponse, TBody extends object>(
   path: string,
   body: TBody
 ): Promise<TResponse> {
-  const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+  const accessToken = await getAuthItem(ACCESS_TOKEN_KEY);
   if (!accessToken) {
     throw new Error("Login is required");
   }
@@ -71,7 +71,7 @@ export async function apiPatchAuthenticated<TResponse, TBody extends object>(
   path: string,
   body: TBody
 ): Promise<TResponse> {
-  const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+  const accessToken = await getAuthItem(ACCESS_TOKEN_KEY);
   if (!accessToken) {
     throw new Error("Login is required");
   }
@@ -94,7 +94,7 @@ export async function apiPatchAuthenticated<TResponse, TBody extends object>(
 }
 
 export async function apiDeleteAuthenticated(path: string): Promise<void> {
-  const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+  const accessToken = await getAuthItem(ACCESS_TOKEN_KEY);
   if (!accessToken) {
     throw new Error("Login is required");
   }

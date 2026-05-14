@@ -1,10 +1,11 @@
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import * as Linking from "expo-linking";
-import * as SecureStore from "expo-secure-store";
 import * as WebBrowser from "expo-web-browser";
 import { env } from "../config/env";
 import { isTravelMode, type TravelMode } from "../travel/travelMode";
+import { deleteAuthItem, getAuthItem, setAuthItem } from "./authStorage";
+import { createWebKakaoReturnUri, currentWebLocation } from "./kakaoReturnUri";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -62,8 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async function restoreSession() {
       try {
         const [storedUser, accessToken] = await Promise.all([
-          SecureStore.getItemAsync(USER_KEY),
-          SecureStore.getItemAsync(ACCESS_TOKEN_KEY)
+          getAuthItem(USER_KEY),
+          getAuthItem(ACCESS_TOKEN_KEY)
         ]);
 
         if (!storedUser || !accessToken) {
@@ -83,7 +84,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         const sessionUser = (await response.json()) as WaytUser;
-        await SecureStore.setItemAsync(USER_KEY, JSON.stringify(sessionUser));
+        await setAuthItem(USER_KEY, JSON.stringify(sessionUser));
         if (mounted) {
           setUser(sessionUser);
         }
@@ -106,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithKakao = useCallback(async () => {
     setLoading(true);
     try {
-      const returnUri = Linking.createURL("auth/kakao");
+      const returnUri = createKakaoReturnUri();
       const authUrl = `${env.apiBaseUrl}/auth/kakao/authorize?returnUri=${encodeURIComponent(returnUri)}`;
       const result = await WebBrowser.openAuthSessionAsync(authUrl, returnUri);
 
@@ -138,9 +139,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         throw new Error("Kakao login response is missing required data");
       }
 
-      await SecureStore.setItemAsync(ACCESS_TOKEN_KEY, auth.accessToken);
-      await SecureStore.setItemAsync(REFRESH_TOKEN_KEY, auth.refreshToken);
-      await SecureStore.setItemAsync(USER_KEY, JSON.stringify(auth.user));
+      await setAuthItem(ACCESS_TOKEN_KEY, auth.accessToken);
+      await setAuthItem(REFRESH_TOKEN_KEY, auth.refreshToken);
+      await setAuthItem(USER_KEY, JSON.stringify(auth.user));
       setUser(auth.user);
       return true;
     } catch (error) {
@@ -179,7 +180,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const updatedUser = (await response.json()) as WaytUser;
-    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(updatedUser));
+    await setAuthItem(USER_KEY, JSON.stringify(updatedUser));
     setUser(updatedUser);
     return updatedUser;
   }, []);
@@ -206,7 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const updatedUser = (await response.json()) as WaytUser;
-    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(updatedUser));
+    await setAuthItem(USER_KEY, JSON.stringify(updatedUser));
     setUser(updatedUser);
     return updatedUser;
   }, []);
@@ -225,7 +226,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const updatedUser = (await response.json()) as WaytUser;
-    await SecureStore.setItemAsync(USER_KEY, JSON.stringify(updatedUser));
+    await setAuthItem(USER_KEY, JSON.stringify(updatedUser));
     setUser(updatedUser);
     return updatedUser;
   }, []);
@@ -281,16 +282,20 @@ function profileUpdatePayload(profile: ProfileUpdate) {
 }
 
 async function clearStoredAuth() {
-  await SecureStore.deleteItemAsync(ACCESS_TOKEN_KEY);
-  await SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY);
-  await SecureStore.deleteItemAsync(USER_KEY);
+  await deleteAuthItem(ACCESS_TOKEN_KEY);
+  await deleteAuthItem(REFRESH_TOKEN_KEY);
+  await deleteAuthItem(USER_KEY);
 }
 
 async function requireAccessToken() {
-  const accessToken = await SecureStore.getItemAsync(ACCESS_TOKEN_KEY);
+  const accessToken = await getAuthItem(ACCESS_TOKEN_KEY);
   if (!accessToken) {
     await clearStoredAuth();
     throw new Error("Login is required");
   }
   return accessToken;
+}
+
+function createKakaoReturnUri() {
+  return createWebKakaoReturnUri(currentWebLocation()) ?? Linking.createURL("auth/kakao");
 }
