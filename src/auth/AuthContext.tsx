@@ -1,29 +1,15 @@
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { Platform } from "react-native";
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
 import { env } from "../config/env";
-import { isTravelMode, type TravelMode } from "../travel/travelMode";
+import type { TravelMode } from "../travel/travelMode";
 import { deleteAuthItem, getAuthItem, setAuthItem } from "./authStorage";
-import { createWebKakaoReturnUri, currentWebLocation } from "./kakaoReturnUri";
+import { kakaoAuthResponseFromQuery, type AuthResponse, type WaytUser } from "./kakaoAuthResult";
+import { createWebKakaoReturnUri, currentWebLocation, shouldUseFullPageKakaoRedirect } from "./kakaoReturnUri";
 
 WebBrowser.maybeCompleteAuthSession();
-
-type WaytUser = {
-  id: string;
-  waytId: string;
-  nickname: string;
-  avatarUrl?: string;
-  subscriptionTier?: string;
-  defaultTravelMode?: TravelMode | null;
-  travelModeOnboardingCompleted?: boolean;
-};
-
-type AuthResponse = {
-  user: WaytUser;
-  accessToken: string;
-  refreshToken: string;
-};
 
 type ProfileUpdate = {
   nickname?: string;
@@ -41,6 +27,7 @@ type AuthContextValue = {
   user: WaytUser | null;
   loading: boolean;
   signInWithKakao: () => Promise<boolean>;
+  completeKakaoSignIn: (url: string) => Promise<boolean>;
   updateProfile: (profile: ProfileUpdate) => Promise<WaytUser>;
   uploadAvatar: (avatar: AvatarUpload) => Promise<WaytUser>;
   deleteAvatar: () => Promise<WaytUser>;
@@ -107,43 +94,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithKakao = useCallback(async () => {
     setLoading(true);
     try {
-      const returnUri = createKakaoReturnUri();
+      const webLocation = currentWebLocation();
+      const returnUri = createKakaoReturnUri(webLocation);
       const authUrl = `${env.apiBaseUrl}/auth/kakao/authorize?returnUri=${encodeURIComponent(returnUri)}`;
+
+      if (Platform.OS === "web" && typeof window !== "undefined" && shouldUseFullPageKakaoRedirect(webLocation)) {
+        window.location.assign(authUrl);
+        return false;
+      }
+
       const result = await WebBrowser.openAuthSessionAsync(authUrl, returnUri);
 
       if (result.type !== "success") {
         return false;
       }
 
-      const parsed = Linking.parse(result.url);
-      const query = parsed.queryParams ?? {};
+      return completeKakaoSignInResult(result.url);
+    } catch (error) {
+      await clearStoredAuth();
+      setUser(null);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-      if (query.error) {
-        throw new Error(queryString(query.errorDescription) || queryString(query.error));
-      }
-
-      const auth: AuthResponse = {
-        accessToken: queryString(query.accessToken),
-        refreshToken: queryString(query.refreshToken),
-        user: {
-          id: queryString(query.userId),
-          waytId: queryString(query.waytId),
-          nickname: queryString(query.nickname),
-          avatarUrl: queryString(query.avatarUrl) || undefined,
-          defaultTravelMode: queryTravelMode(query.defaultTravelMode),
-          travelModeOnboardingCompleted: queryString(query.travelModeOnboardingCompleted) === "true"
-        }
-      };
-
-      if (!auth.accessToken || !auth.refreshToken || !auth.user.id) {
-        throw new Error("Kakao login response is missing required data");
-      }
-
-      await setAuthItem(ACCESS_TOKEN_KEY, auth.accessToken);
-      await setAuthItem(REFRESH_TOKEN_KEY, auth.refreshToken);
-      await setAuthItem(USER_KEY, JSON.stringify(auth.user));
-      setUser(auth.user);
-      return true;
+  const completeKakaoSignIn = useCallback(async (url: string) => {
+    setLoading(true);
+    try {
+      return await completeKakaoSignInResult(url);
     } catch (error) {
       await clearStoredAuth();
       setUser(null);
@@ -236,15 +215,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user,
       loading,
       signInWithKakao,
+      completeKakaoSignIn,
       updateProfile,
       uploadAvatar,
       deleteAvatar,
       signOut
     }),
-    [deleteAvatar, loading, signInWithKakao, signOut, updateProfile, uploadAvatar, user]
+    [completeKakaoSignIn, deleteAvatar, loading, signInWithKakao, signOut, updateProfile, uploadAvatar, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+
+  async function completeKakaoSignInResult(url: string) {
+    const auth = kakaoAuthResponseFromUrl(url);
+    await setAuthItem(ACCESS_TOKEN_KEY, auth.accessToken);
+    await setAuthItem(REFRESH_TOKEN_KEY, auth.refreshToken);
+    await setAuthItem(USER_KEY, JSON.stringify(auth.user));
+    setUser(auth.user);
+    return true;
+  }
 }
 
 export function useAuth() {
@@ -255,16 +244,9 @@ export function useAuth() {
   return context;
 }
 
-function queryString(value: string | string[] | undefined) {
-  if (Array.isArray(value)) {
-    return value[0] ?? "";
-  }
-  return value ?? "";
-}
-
-function queryTravelMode(value: string | string[] | undefined) {
-  const mode = queryString(value);
-  return isTravelMode(mode) ? mode : null;
+function kakaoAuthResponseFromUrl(url: string): AuthResponse {
+  const parsed = Linking.parse(url);
+  return kakaoAuthResponseFromQuery(parsed.queryParams ?? {});
 }
 
 function profileUpdatePayload(profile: ProfileUpdate) {
@@ -296,6 +278,6 @@ async function requireAccessToken() {
   return accessToken;
 }
 
-function createKakaoReturnUri() {
-  return createWebKakaoReturnUri(currentWebLocation()) ?? Linking.createURL("auth/kakao");
+function createKakaoReturnUri(webLocation: ReturnType<typeof currentWebLocation>) {
+  return createWebKakaoReturnUri(webLocation) ?? Linking.createURL("auth/kakao");
 }

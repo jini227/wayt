@@ -25,3 +25,28 @@ export function currentWebLocation(): WebLocation | null {
 export function webDeploymentBasePath(pathname: string) {
   return pathname === "/wayt" || pathname.startsWith("/wayt/") ? "/wayt" : "";
 }
+
+export function shouldUseFullPageKakaoRedirect(location: WebLocation | null) {
+  if (!location?.origin) {
+    return false;
+  }
+
+  return !isSecureWebAuthOrigin(location.origin);
+}
+
+function isSecureWebAuthOrigin(origin: string) {
+  try {
+    const url = new URL(origin);
+    if (url.protocol === "https:") {
+      return true;
+    }
+
+    if (url.protocol !== "http:") {
+      return false;
+    }
+
+    return url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "::1" || url.hostname === "[::1]";
+  } catch {
+    return false;
+  }
+}

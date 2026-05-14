@@ -1,10 +1,46 @@
-import { ActivityIndicator, StyleSheet, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
+import { useRouter } from "expo-router";
+import { useAuth } from "../../src/auth/AuthContext";
 import { colors } from "../../src/theme";
 
 export default function KakaoAuthCallbackScreen() {
+  const router = useRouter();
+  const { completeKakaoSignIn } = useAuth();
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function finishSignIn() {
+      try {
+        if (typeof window === "undefined") {
+          throw new Error("Kakao login callback is only available in the browser.");
+        }
+
+        await completeKakaoSignIn(window.location.href);
+        router.replace("/");
+      } catch (error) {
+        if (mounted) {
+          setErrorMessage(error instanceof Error ? error.message : "Kakao login failed");
+        }
+      }
+    }
+
+    finishSignIn();
+
+    return () => {
+      mounted = false;
+    };
+  }, [completeKakaoSignIn, router]);
+
   return (
     <View style={styles.wrap}>
-      <ActivityIndicator color={colors.primary} />
+      {errorMessage ? (
+        <Text style={styles.error}>{errorMessage}</Text>
+      ) : (
+        <ActivityIndicator color={colors.primary} />
+      )}
     </View>
   );
 }
@@ -15,5 +51,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#FFFFFF"
+  },
+  error: {
+    color: colors.danger,
+    fontSize: 15,
+    fontWeight: "700",
+    lineHeight: 22,
+    paddingHorizontal: 24,
+    textAlign: "center"
   }
 });
