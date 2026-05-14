@@ -495,7 +495,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 44,
     borderRadius: 12,
-    flex: 0,
+    flexShrink: 0,
     alignItems: "center",
     justifyContent: "center"
   },
