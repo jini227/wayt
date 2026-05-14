@@ -17,12 +17,22 @@ assert.match(
   "shared map surface should avoid react-native-webview on web"
 );
 assert.match(
+  naverWebMap,
+  /createNaverMapFrameUrl/,
+  "shared web map should use a real same-origin route so Naver does not see about:srcdoc"
+);
+assert.match(
   newAppointment,
   /Platform\.OS === "web"/,
   "place picker should avoid react-native-webview on web"
 );
 assert.match(
   newAppointment,
-  /window\.parent\.postMessage\(payload, "\*"\)/,
-  "web place picker iframe should send selected coordinates to the parent page"
+  /createNaverMapFrameUrl/,
+  "place picker should use a real same-origin route so Naver does not see about:srcdoc"
+);
+assert.doesNotMatch(
+  `${naverWebMap}\n${newAppointment}`,
+  /srcDoc/,
+  "web map iframes should not use srcDoc because Naver authorizes it as about:srcdoc"
 );

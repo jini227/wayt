@@ -28,6 +28,7 @@ import { Header, InfoCard } from "../../src/components/Cards";
 import { PrimaryButton } from "../../src/components/Buttons";
 import { FooterBar } from "../../src/components/FooterBar";
 import { TimeWheelPicker } from "../../src/components/TimeWheelPicker";
+import { createNaverMapFrameUrl } from "../../src/components/naverMapFrameUrl";
 import { apiGetAuthenticated, apiPostAuthenticated } from "../../src/api/client";
 import { useAuth } from "../../src/auth/AuthContext";
 import {
@@ -1237,6 +1238,15 @@ function MapPickerSurface({
     selectedPlace?.latitude,
     selectedPlace?.longitude
   ]);
+  const frameUrl = useMemo(
+    () =>
+      createNaverMapFrameUrl({
+        mode: "picker",
+        center,
+        selectedPlace
+      }),
+    [center.latitude, center.longitude, selectedPlace?.latitude, selectedPlace?.longitude]
+  );
   const mapSource = useMemo(() => ({ html: mapHtml, baseUrl: "http://localhost:8083" }), [mapHtml]);
 
   useEffect(() => {
@@ -1260,7 +1270,7 @@ function MapPickerSurface({
   return (
     <View style={styles.mapSurface}>
       {Platform.OS === "web" ? (
-        <WebPlacePickerFrame html={mapHtml} />
+        <WebPlacePickerFrame src={frameUrl} />
       ) : (
         <WebView
           originWhitelist={["*"]}
@@ -1334,9 +1344,9 @@ function MapPickerSurface({
   );
 }
 
-function WebPlacePickerFrame({ html }: { html: string }) {
+function WebPlacePickerFrame({ src }: { src: string }) {
   return createElement("iframe", {
-    srcDoc: html,
+    src,
     title: "Meeting place map",
     style: webMapFrameStyle
   });

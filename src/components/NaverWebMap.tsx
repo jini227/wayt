@@ -3,17 +3,28 @@ import { Platform, StyleSheet, View } from "react-native";
 import { WebView } from "react-native-webview";
 import { env } from "../config/env";
 import type { MapSurfaceProps } from "./MapSurface";
+import { createNaverMapFrameUrl } from "./naverMapFrameUrl";
 
 export function NaverWebMap({ meetingPlace, radiusMeters = 100, participantMarkers = [], variant = "card" }: MapSurfaceProps) {
   const html = useMemo(
     () => mapHtml({ meetingPlace, radiusMeters, participantMarkers }),
     [meetingPlace.latitude, meetingPlace.longitude, radiusMeters, participantMarkers]
   );
+  const frameUrl = useMemo(
+    () =>
+      createNaverMapFrameUrl({
+        mode: "display",
+        center: meetingPlace,
+        radiusMeters,
+        participantMarkers
+      }),
+    [meetingPlace.latitude, meetingPlace.longitude, radiusMeters, participantMarkers]
+  );
 
   return (
     <View style={[styles.wrap, variant === "fill" && styles.fillWrap]}>
       {Platform.OS === "web" ? (
-        <WebMapFrame html={html} title="Wayt map" />
+        <WebMapFrame src={frameUrl} title="Wayt map" />
       ) : (
         <WebView
           originWhitelist={["*"]}
@@ -28,9 +39,9 @@ export function NaverWebMap({ meetingPlace, radiusMeters = 100, participantMarke
   );
 }
 
-function WebMapFrame({ html, title }: { html: string; title: string }) {
+function WebMapFrame({ src, title }: { src: string; title: string }) {
   return createElement("iframe", {
-    srcDoc: html,
+    src,
     title,
     style: webFrameStyle
   });
