@@ -22,7 +22,7 @@ export default function LoginScreen() {
           <Image source={require("../assets/wayt-splash.png")} style={styles.brandImage} resizeMode="contain" />
           <Text style={styles.logo}>가는중</Text>
           <Text style={styles.title}>약속까지 가는 길을{"\n"}함께 확인해요</Text>
-          <Text style={styles.subtitle}>친구들의 출발, 이동, 도착 상태를 한 화면에서 볼 수 있어요.</Text>
+          <Text style={styles.subtitle}>친구들의 출발, 이동, 도착 상태를{"\n"}함께 확인해요.</Text>
         </View>
 
         <View style={styles.actionBlock}>
