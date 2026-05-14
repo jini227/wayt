@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createElement, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentType, ReactNode } from "react";
 import type { NativeScrollEvent, NativeSyntheticEvent, StyleProp, ViewStyle } from "react-native";
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { usePreventRemove } from "@react-navigation/native";
 import * as Location from "expo-location";
 import { WebView } from "react-native-webview";
@@ -1235,23 +1235,43 @@ function MapPickerSurface({
   ]);
   const mapSource = useMemo(() => ({ html: mapHtml, baseUrl: "http://localhost:8083" }), [mapHtml]);
 
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof window === "undefined") {
+      return undefined;
+    }
+
+    const handleMessage = (event: MessageEvent) => {
+      const data = parseMapMessage(event.data);
+      if (data) {
+        onSelect(data);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [onSelect]);
+
   return (
     <View style={styles.mapSurface}>
-      <WebView
-        originWhitelist={["*"]}
-        source={mapSource}
-        javaScriptEnabled
-        domStorageEnabled
-        onMessage={(event) => {
-          try {
-            const data = JSON.parse(event.nativeEvent.data) as Coordinate;
-            onSelect(data);
-          } catch {
-            // Ignore malformed map messages.
-          }
-        }}
-        style={styles.map}
-      />
+      {Platform.OS === "web" ? (
+        <WebPlacePickerFrame html={mapHtml} />
+      ) : (
+        <WebView
+          originWhitelist={["*"]}
+          source={mapSource}
+          javaScriptEnabled
+          domStorageEnabled
+          onMessage={(event) => {
+            const data = parseMapMessage(event.nativeEvent.data);
+            if (data) {
+              onSelect(data);
+            }
+          }}
+          style={styles.map}
+        />
+      )}
       <View style={styles.mapSearchOverlay}>
         <View style={styles.mapSearchRow}>
           <View style={styles.mapSearchBox}>
@@ -1308,6 +1328,38 @@ function MapPickerSurface({
       </Pressable>
     </View>
   );
+}
+
+function WebPlacePickerFrame({ html }: { html: string }) {
+  return createElement("iframe", {
+    srcDoc: html,
+    title: "Meeting place map",
+    style: webMapFrameStyle
+  });
+}
+
+function parseMapMessage(data: unknown): Coordinate | null {
+  try {
+    const payload = typeof data === "string" ? JSON.parse(data) : data;
+    if (!payload || typeof payload !== "object") {
+      return null;
+    }
+
+    const message = payload as { type?: unknown; latitude?: unknown; longitude?: unknown };
+    if (message.type !== "wayt-place-picker-select") {
+      return null;
+    }
+    if (typeof message.latitude !== "number" || typeof message.longitude !== "number") {
+      return null;
+    }
+
+    return {
+      latitude: message.latitude,
+      longitude: message.longitude
+    };
+  } catch {
+    return null;
+  }
 }
 
 function CalendarPicker({
@@ -1729,10 +1781,16 @@ function placePickerHtml(selectedPlace: SelectedPlace | null, centerPoint: Coord
         });
         map.panTo(position);
         if (notify) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
+          const payload = {
+            type: "wayt-place-picker-select",
             latitude: position.lat(),
             longitude: position.lng()
-          }));
+          };
+          if (window.ReactNativeWebView) {
+            window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+          } else if (window.parent) {
+            window.parent.postMessage(payload, "*");
+          }
         }
       }
 
@@ -2651,3 +2709,11 @@ const styles = StyleSheet.create({
     opacity: 0.48
   }
 });
+
+const webMapFrameStyle = {
+  width: "100%",
+  height: "100%",
+  border: 0,
+  display: "block",
+  backgroundColor: "#F7F6F2"
+};

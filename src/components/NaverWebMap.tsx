@@ -1,21 +1,39 @@
-import { StyleSheet, View } from "react-native";
+import { createElement, useMemo } from "react";
+import { Platform, StyleSheet, View } from "react-native";
 import { WebView } from "react-native-webview";
 import { env } from "../config/env";
 import type { MapSurfaceProps } from "./MapSurface";
 
 export function NaverWebMap({ meetingPlace, radiusMeters = 100, participantMarkers = [], variant = "card" }: MapSurfaceProps) {
+  const html = useMemo(
+    () => mapHtml({ meetingPlace, radiusMeters, participantMarkers }),
+    [meetingPlace.latitude, meetingPlace.longitude, radiusMeters, participantMarkers]
+  );
+
   return (
     <View style={[styles.wrap, variant === "fill" && styles.fillWrap]}>
-      <WebView
-        originWhitelist={["*"]}
-        source={{ html: mapHtml({ meetingPlace, radiusMeters, participantMarkers }), baseUrl: "http://localhost:8083" }}
-        javaScriptEnabled
-        domStorageEnabled
-        scrollEnabled={false}
-        style={styles.webview}
-      />
+      {Platform.OS === "web" ? (
+        <WebMapFrame html={html} title="Wayt map" />
+      ) : (
+        <WebView
+          originWhitelist={["*"]}
+          source={{ html, baseUrl: "http://localhost:8083" }}
+          javaScriptEnabled
+          domStorageEnabled
+          scrollEnabled={false}
+          style={styles.webview}
+        />
+      )}
     </View>
   );
+}
+
+function WebMapFrame({ html, title }: { html: string; title: string }) {
+  return createElement("iframe", {
+    srcDoc: html,
+    title,
+    style: webFrameStyle
+  });
 }
 
 type MapHtmlProps = Required<Pick<MapSurfaceProps, "meetingPlace" | "radiusMeters" | "participantMarkers">>;
@@ -160,3 +178,11 @@ const styles = StyleSheet.create({
     backgroundColor: "#F7F6F2"
   }
 });
+
+const webFrameStyle = {
+  width: "100%",
+  height: "100%",
+  border: 0,
+  display: "block",
+  backgroundColor: "#F7F6F2"
+};

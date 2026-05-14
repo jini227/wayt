@@ -1,5 +1,6 @@
 import type { ComponentType } from "react";
 import Constants from "expo-constants";
+import { Platform } from "react-native";
 import { NaverWebMap } from "./NaverWebMap";
 
 declare const require: (path: string) => unknown;
@@ -25,7 +26,7 @@ export type MapSurfaceProps = {
 };
 
 export function MapSurface(props: MapSurfaceProps) {
-  if (Constants.appOwnership === "expo") {
+  if (Platform.OS === "web" || Constants.appOwnership === "expo") {
     return <NaverWebMap {...props} />;
   }
 
