@@ -6,10 +6,14 @@ import { colors } from "../../src/theme";
 
 export default function KakaoAuthCallbackScreen() {
   const router = useRouter();
-  const { completeKakaoSignIn } = useAuth();
+  const { completeKakaoSignIn, loading } = useAuth();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
+    if (loading) {
+      return undefined;
+    }
+
     let mounted = true;
 
     async function finishSignIn() {
@@ -32,7 +36,7 @@ export default function KakaoAuthCallbackScreen() {
     return () => {
       mounted = false;
     };
-  }, [completeKakaoSignIn, router]);
+  }, [completeKakaoSignIn, loading, router]);
 
   return (
     <View style={styles.wrap}>
