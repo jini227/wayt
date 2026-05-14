@@ -48,3 +48,9 @@ assert(
   calendarSource.includes('router.push(`/appointments/${appointment.id}`)'),
   "calendar appointment rows open the existing appointment detail route"
 );
+assert(
+  calendarSource.includes("const closeCalendar = useCallback(() =>") &&
+    calendarSource.includes("router.back();") &&
+    calendarSource.includes("onPullDownDismiss={closeCalendar}"),
+  "calendar screen closes when pulled downward from the top"
+);

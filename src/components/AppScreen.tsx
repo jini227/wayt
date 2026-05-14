@@ -1,9 +1,13 @@
-import { useCallback, useEffect, useRef, type MutableRefObject, type ReactNode, type Ref } from "react";
+import { useCallback, useEffect, useMemo, useRef, type MutableRefObject, type ReactNode, type Ref } from "react";
 import { useFocusEffect, usePathname } from "expo-router";
 import type { ScrollViewProps } from "react-native";
-import { KeyboardAvoidingView, Platform, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
+import { KeyboardAvoidingView, PanResponder, Platform, RefreshControl, ScrollView, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { colors, spacing } from "../theme";
+import {
+  shouldCompleteDownwardDismissDrag,
+  shouldStartDownwardDismissDrag
+} from "../gestures/dismissDragGesture";
 import { useScrollToTopRegistry } from "./ScrollToTopRegistry";
 import { scrollVisibleContentToTop } from "./scrollToTop";
 
@@ -17,6 +21,7 @@ type AppScreenProps = {
   keyboardAvoiding?: boolean;
   refreshing?: boolean;
   onRefresh?: () => void;
+  onPullDownDismiss?: () => void;
 };
 
 export function AppScreen({
@@ -28,7 +33,8 @@ export function AppScreen({
   keyboardShouldPersistTaps,
   keyboardAvoiding,
   refreshing,
-  onRefresh
+  onRefresh,
+  onPullDownDismiss
 }: AppScreenProps) {
   const pathname = usePathname();
   const internalScrollRef = useRef<ScrollView | null>(null);
@@ -41,6 +47,34 @@ export function AppScreen({
     },
     [scrollRef]
   );
+  const pullDownDismissPanResponder = useMemo(
+    () =>
+      PanResponder.create({
+        onMoveShouldSetPanResponderCapture: (_, gestureState) =>
+          Boolean(
+            onPullDownDismiss &&
+              scrollYRef.current <= 0 &&
+              shouldStartDownwardDismissDrag(gestureState)
+          ),
+        onMoveShouldSetPanResponder: (_, gestureState) =>
+          Boolean(
+            onPullDownDismiss &&
+              scrollYRef.current <= 0 &&
+              shouldStartDownwardDismissDrag(gestureState)
+          ),
+        onPanResponderRelease: (_, gestureState) => {
+          if (
+            onPullDownDismiss &&
+            scrollYRef.current <= 0 &&
+            shouldCompleteDownwardDismissDrag(gestureState)
+          ) {
+            onPullDownDismiss();
+          }
+        }
+      }),
+    [onPullDownDismiss]
+  );
+  const pullDownDismissHandlers = onPullDownDismiss ? pullDownDismissPanResponder.panHandlers : {};
 
   useEffect(() => {
     if (noScroll || !withTabs) {
@@ -78,6 +112,7 @@ export function AppScreen({
     <View style={[styles.content, styles.noScrollContent, withTabs && styles.withTabs]}>{children}</View>
   ) : (
     <ScrollView
+      {...pullDownDismissHandlers}
       ref={setScrollRef}
       onScroll={(event) => {
         scrollYRef.current = event.nativeEvent.contentOffset.y;
@@ -87,12 +122,14 @@ export function AppScreen({
       keyboardShouldPersistTaps={keyboardShouldPersistTaps}
       refreshControl={
         onRefresh ? (
-          <RefreshControl
-            refreshing={refreshing ?? false}
-            onRefresh={onRefresh}
-            tintColor={colors.primary}
-            colors={[colors.primary]}
-          />
+          onPullDownDismiss ? undefined : (
+            <RefreshControl
+              refreshing={refreshing ?? false}
+              onRefresh={onRefresh}
+              tintColor={colors.primary}
+              colors={[colors.primary]}
+            />
+          )
         ) : undefined
       }
       contentContainerStyle={[

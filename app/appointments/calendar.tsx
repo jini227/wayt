@@ -104,6 +104,9 @@ export default function AppointmentCalendarScreen() {
     [appointments, selectedDateKey]
   );
   const selectedDateLabel = useMemo(() => formatSelectedDateLabel(selectedDateKey), [selectedDateKey]);
+  const closeCalendar = useCallback(() => {
+    router.back();
+  }, [router]);
 
   if (loading) {
     return null;
@@ -127,11 +130,11 @@ export default function AppointmentCalendarScreen() {
   };
 
   return (
-    <AppScreen refreshing={refreshing} onRefresh={refreshCalendar}>
+    <AppScreen refreshing={refreshing} onRefresh={refreshCalendar} onPullDownDismiss={closeCalendar}>
       <Header
         title="약속 달력"
         center
-        back={() => router.back()}
+        back={closeCalendar}
         action={
           <Pressable
             onPress={moveToToday}
