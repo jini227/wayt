@@ -6,7 +6,8 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { Bell, Check, ChevronRight, Copy, ImageIcon, LogOut, MapPin, Trash2, UserRound, UsersRound } from "lucide-react-native";
 import { AppScreen } from "../src/components/AppScreen";
 import { BottomTabBar } from "../src/components/BottomTabBar";
-import { Header, InfoCard } from "../src/components/Cards";
+import { InfoCard } from "../src/components/Cards";
+import { TabHero } from "../src/components/TabHero";
 import { Avatar } from "../src/components/Avatar";
 import { apiGetAuthenticated } from "../src/api/client";
 import { addressBookCountLabel } from "../src/addressBook/addressBook";
@@ -111,7 +112,7 @@ export default function ProfileScreen() {
       mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
-      quality: 0.85
+      quality: 0.72
     });
 
     if (result.canceled || !result.assets[0]) {
@@ -124,7 +125,8 @@ export default function ProfileScreen() {
       await uploadAvatar({
         uri: asset.uri,
         name: asset.fileName ?? `profile.${extensionFromUri(asset.uri)}`,
-        type: asset.mimeType ?? mimeTypeFromUri(asset.uri)
+        type: asset.mimeType ?? mimeTypeFromUri(asset.uri),
+        file: asset.file
       });
       showToast({ title: "프로필 사진을 바꿨어요." });
     } catch (error) {
@@ -222,7 +224,7 @@ export default function ProfileScreen() {
   return (
     <>
       <AppScreen withTabs>
-        <Header title="내 정보" />
+        <TabHero title="내 정보" />
 
         <InfoCard>
           <View style={styles.profileRow}>

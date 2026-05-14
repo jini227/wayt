@@ -7,6 +7,7 @@ import { AppScreen } from "../../src/components/AppScreen";
 import { Avatar } from "../../src/components/Avatar";
 import { IconTextRow, InfoCard } from "../../src/components/Cards";
 import { BottomTabBar } from "../../src/components/BottomTabBar";
+import { TabHero } from "../../src/components/TabHero";
 import { apiGetAuthenticated } from "../../src/api/client";
 import { useAuth } from "../../src/auth/AuthContext";
 import {
@@ -111,10 +112,7 @@ export default function NextAppointmentScreen() {
   return (
     <>
       <AppScreen withTabs refreshing={refreshing} onRefresh={refreshNextAppointment}>
-        <View style={styles.hero}>
-          <Text style={styles.title}>다음 약속</Text>
-          <Text style={styles.subtitle}>가장 가까운 일정</Text>
-        </View>
+        <TabHero title="다음 약속" subtitle="가장 가까운 일정" />
 
         {appointmentsLoading ? (
           <View style={styles.stateBox}>
@@ -240,21 +238,6 @@ function ParticipantAvatarRow({
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    marginBottom: 18
-  },
-  title: {
-    color: colors.text,
-    fontSize: 38,
-    fontWeight: "900",
-    letterSpacing: 0
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: 18,
-    fontWeight: "600",
-    marginTop: 6
-  },
   focusCard: {
     padding: 22
   },

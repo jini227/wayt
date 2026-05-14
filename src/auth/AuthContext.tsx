@@ -6,6 +6,7 @@ import * as WebBrowser from "expo-web-browser";
 import { env } from "../config/env";
 import type { TravelMode } from "../travel/travelMode";
 import { deleteAuthItem, getAuthItem, setAuthItem } from "./authStorage";
+import { appendAvatarFileToFormData, type AvatarUploadFile } from "./avatarUploadFormData";
 import { kakaoAuthResponseFromQuery, type AuthResponse, type WaytUser } from "./kakaoAuthResult";
 import { createWebKakaoReturnUri, currentWebLocation, shouldUseFullPageKakaoRedirect } from "./kakaoReturnUri";
 
@@ -17,11 +18,7 @@ type ProfileUpdate = {
   travelModeOnboardingCompleted?: boolean;
 };
 
-type AvatarUpload = {
-  uri: string;
-  name: string;
-  type: string;
-};
+type AvatarUpload = AvatarUploadFile;
 
 type AuthContextValue = {
   user: WaytUser | null;
@@ -167,11 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const uploadAvatar = useCallback(async (avatar: AvatarUpload) => {
     const accessToken = await requireAccessToken();
     const formData = new FormData();
-    formData.append("file", {
-      uri: avatar.uri,
-      name: avatar.name,
-      type: avatar.type
-    } as unknown as Blob);
+    appendAvatarFileToFormData(formData, avatar, Platform.OS);
 
     const response = await fetch(`${env.apiBaseUrl}/me/avatar`, {
       method: "POST",

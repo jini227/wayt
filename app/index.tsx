@@ -7,6 +7,7 @@ import { AppScreen } from "../src/components/AppScreen";
 import { AppointmentCard, type AppointmentCardData } from "../src/components/AppointmentCard";
 import { BottomTabBar } from "../src/components/BottomTabBar";
 import { SegmentedControl } from "../src/components/SegmentedControl";
+import { TabHero } from "../src/components/TabHero";
 import { withCountLabels } from "../src/components/segmentedControlOptions";
 import { apiGetAuthenticated } from "../src/api/client";
 import { filterHomeAppointments, type HomeAppointmentLike } from "../src/appointments/homeAppointments";
@@ -151,10 +152,7 @@ export default function HomeScreen() {
   return (
     <>
       <AppScreen withTabs refreshing={refreshing} onRefresh={refreshHome}>
-        <View style={styles.hero}>
-          <Text style={styles.title}>가는중</Text>
-          <Text style={styles.subtitle}>다가오는 약속</Text>
-        </View>
+        <TabHero title="가는중" subtitle="다가오는 약속" />
         {receivedInviteSummary ? (
           <Pressable
             onPress={() => router.push("/invites")}
@@ -293,21 +291,6 @@ function formatDuration(from: number, to: number) {
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    marginBottom: 18
-  },
-  title: {
-    color: colors.text,
-    fontSize: 38,
-    fontWeight: "900",
-    letterSpacing: 0
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: 18,
-    fontWeight: "600",
-    marginTop: 6
-  },
   list: {
     gap: 14,
     marginTop: 16

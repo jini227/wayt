@@ -6,6 +6,7 @@ import { AppScreen } from "../../src/components/AppScreen";
 import { BottomTabBar } from "../../src/components/BottomTabBar";
 import { ChevronCard, IconTextRow } from "../../src/components/Cards";
 import { SegmentedControl } from "../../src/components/SegmentedControl";
+import { TabHero } from "../../src/components/TabHero";
 import { withCountLabels } from "../../src/components/segmentedControlOptions";
 import { apiGetAuthenticated } from "../../src/api/client";
 import { appointmentRoleMark } from "../../src/appointments/appointmentRole";
@@ -142,10 +143,7 @@ export default function HistoryScreen() {
   return (
     <>
       <AppScreen withTabs refreshing={refreshing} onRefresh={refreshHistory}>
-        <View style={styles.hero}>
-          <Text style={styles.title}>히스토리</Text>
-          <Text style={styles.subtitle}>지난 약속 기록</Text>
-        </View>
+        <TabHero title="히스토리" subtitle="지난 약속 기록" />
         <View style={styles.archiveTools}>
           <View style={styles.searchBox}>
             <Search color={colors.textSubtle} size={19} strokeWidth={2.3} />
@@ -312,21 +310,6 @@ function addMonths(date: Date, amount: number) {
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    marginBottom: 16
-  },
-  title: {
-    color: colors.text,
-    fontSize: 38,
-    fontWeight: "900",
-    letterSpacing: 0
-  },
-  subtitle: {
-    color: colors.textMuted,
-    fontSize: 18,
-    fontWeight: "600",
-    marginTop: 6
-  },
   archiveTools: {
     gap: 12,
     marginBottom: 14
