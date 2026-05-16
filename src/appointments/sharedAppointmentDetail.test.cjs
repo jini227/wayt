@@ -33,20 +33,26 @@ assert.match(
 
 assert.match(
   detailSource,
-  /Platform\.OS === "web"[\s\S]*Clipboard\.setStringAsync\(url\)/,
-  "web share button copies the appointment link instead of using unsupported native share"
-);
-
-assert.match(
-  detailSource,
   /canLeave=\{Boolean\(myParticipant\)\}/,
   "participants keep the leave action even when the backend has not deployed isParticipant yet"
 );
 
-assert.doesNotMatch(
+assert.match(
   detailSource,
   /router\.push\(`\/appointments\/\$\{liveAppointment\.id\}\/invite`\)/,
-  "the top-level share action shares the appointment URL instead of opening invite management"
+  "participant invite actions still open the existing invite management screen"
+);
+
+assert.match(
+  detailSource,
+  /canInvite=\{Boolean\(myParticipant\)\}/,
+  "public shared viewers do not see invite management actions"
+);
+
+assert.doesNotMatch(
+  detailSource,
+  /Share\.share/,
+  "appointment detail does not call unsupported native share from the web header action"
 );
 
 assert.match(

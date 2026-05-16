@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, AppState, Modal, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, AppState, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Linking from "expo-linking";
 import * as Location from "expo-location";
@@ -38,7 +38,6 @@ import {
   shouldPromptManualEtaAfterRoute,
   shouldShowManualEtaAction
 } from "../../src/appointments/etaDisplay";
-import { createAppointmentShareUrl } from "../../src/appointments/appointmentShare";
 import {
   createLiveAppointmentSectionOrder,
   createMyTravelInfoDisplay,
@@ -453,37 +452,6 @@ export default function LiveAppointmentScreen() {
       ]
     });
   }, [actionLoading, appointment, myParticipant, router, showDialog, showToast]);
-
-  const handleShareAppointment = useCallback(async () => {
-    if (!appointment) {
-      return;
-    }
-
-    const url = createAppointmentShareUrl({
-      appointmentId: appointment.id,
-      currentHref: typeof window === "undefined" ? undefined : window.location.href
-    });
-
-    try {
-      if (Platform.OS === "web") {
-        await Clipboard.setStringAsync(url);
-        showToast({ title: "링크를 복사했어요." });
-        return;
-      }
-
-      await Share.share({
-        title: appointment.title,
-        url,
-        message: `${appointment.title}\n${url}`
-      });
-    } catch (shareError) {
-      showDialog({
-        title: "링크를 공유하지 못했어요.",
-        message: shareError instanceof Error ? shareError.message : undefined,
-        tone: "danger"
-      });
-    }
-  }, [appointment, showDialog, showToast]);
 
   const handleRemoveParticipant = useCallback((participant: ApiParticipant) => {
     if (!appointment || !myParticipant || appointment.myRole !== "HOST" || participant.userId === user?.id || actionLoading) {
@@ -990,9 +958,10 @@ export default function LiveAppointmentScreen() {
           hasPenalty={hasPenalty}
           participantCount={displayParticipants.length}
           etaLabel={myTravelInfoDisplay?.etaPrimaryLabel ?? countdownValue(liveAppointment.scheduledAt)}
+          canInvite={Boolean(myParticipant)}
           canLeave={Boolean(myParticipant)}
           actionDisabled={actionLoading !== null}
-          onShare={handleShareAppointment}
+          onInvite={() => router.push(`/appointments/${liveAppointment.id}/invite`)}
           onLeave={handleLeave}
         />
       }
@@ -1013,9 +982,11 @@ export default function LiveAppointmentScreen() {
               <LogOut color={colors.danger} size={21} strokeWidth={2.3} />
             </Pressable>
           ) : null}
-          <Pressable onPress={() => void handleShareAppointment()} style={styles.iconButton}>
-            <Share2 color={colors.text} size={22} strokeWidth={2.2} />
-          </Pressable>
+          {myParticipant ? (
+            <Pressable onPress={() => router.push(`/appointments/${liveAppointment.id}/invite`)} style={styles.iconButton}>
+              <Share2 color={colors.text} size={22} strokeWidth={2.2} />
+            </Pressable>
+          ) : null}
         </View>
       </View>
 
@@ -1049,9 +1020,10 @@ function AppointmentDesktopAside({
   hasPenalty,
   participantCount,
   etaLabel,
+  canInvite,
   canLeave,
   actionDisabled,
-  onShare,
+  onInvite,
   onLeave
 }: {
   title: string;
@@ -1063,9 +1035,10 @@ function AppointmentDesktopAside({
   hasPenalty: boolean;
   participantCount: number;
   etaLabel: string;
+  canInvite: boolean;
   canLeave: boolean;
   actionDisabled: boolean;
-  onShare: () => void;
+  onInvite: () => void;
   onLeave: () => void;
 }) {
   return (
@@ -1093,10 +1066,12 @@ function AppointmentDesktopAside({
             <Text style={styles.desktopStatusLabel}>내 이동</Text>
           </View>
         </View>
-        <Pressable onPress={() => void onShare()} style={({ pressed }) => [styles.desktopInviteButton, pressed && styles.buttonPressed]}>
-          <Share2 color="#FFFFFF" size={18} strokeWidth={2.5} />
-          <Text style={styles.desktopInviteText}>링크 공유</Text>
-        </Pressable>
+        {canInvite ? (
+          <Pressable onPress={onInvite} style={({ pressed }) => [styles.desktopInviteButton, pressed && styles.buttonPressed]}>
+            <Share2 color="#FFFFFF" size={18} strokeWidth={2.5} />
+            <Text style={styles.desktopInviteText}>초대 공유</Text>
+          </Pressable>
+        ) : null}
         {canLeave ? (
           <Pressable
             onPress={onLeave}
