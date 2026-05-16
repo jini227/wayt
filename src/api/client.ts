@@ -41,6 +41,20 @@ export async function apiGetAuthenticated<TResponse>(path: string): Promise<TRes
   return response.json() as Promise<TResponse>;
 }
 
+export async function apiGetOptionalAuthenticated<TResponse>(path: string): Promise<TResponse> {
+  const accessToken = await getAuthItem(ACCESS_TOKEN_KEY);
+  const response = await fetch(`${env.apiBaseUrl}${path}`, {
+    headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(apiErrorMessage(message, response.status));
+  }
+
+  return response.json() as Promise<TResponse>;
+}
+
 export async function apiPostAuthenticated<TResponse, TBody extends object>(
   path: string,
   body: TBody

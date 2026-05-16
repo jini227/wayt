@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, AppState, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, AppState, Modal, Platform, Pressable, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import * as Linking from "expo-linking";
 import * as Location from "expo-location";
@@ -38,6 +38,7 @@ import {
   shouldPromptManualEtaAfterRoute,
   shouldShowManualEtaAction
 } from "../../src/appointments/etaDisplay";
+import { createAppointmentShareUrl } from "../../src/appointments/appointmentShare";
 import {
   createLiveAppointmentSectionOrder,
   createMyTravelInfoDisplay,
@@ -56,7 +57,7 @@ import {
   shouldShowStatusLogSheetAction,
   statusLogCountLabel
 } from "../../src/appointments/statusLogDisplay";
-import { apiGetAuthenticated, apiPatchAuthenticated, apiPostAuthenticated } from "../../src/api/client";
+import { apiGetAuthenticated, apiGetOptionalAuthenticated, apiPatchAuthenticated, apiPostAuthenticated } from "../../src/api/client";
 import { useAuth } from "../../src/auth/AuthContext";
 import { useAppFeedback } from "../../src/feedback/AppFeedback";
 import { TravelModeChoiceGrid } from "../../src/travel/TravelModeChoiceGrid";
@@ -134,7 +135,8 @@ type ApiAppointment = {
   memo?: string;
   completedAt: string | null;
   completionReason: "ALL_ARRIVED" | "HOST_FORCE" | null;
-  myRole: "HOST" | "PARTICIPANT";
+  myRole: "HOST" | "PARTICIPANT" | null;
+  isParticipant: boolean;
   participants: ApiParticipant[];
   statusLogs: ApiStatusLog[];
 };
@@ -149,6 +151,14 @@ const STATUS_LOG_ACTIONS: Record<Exclude<StatusButtonAction, "arrived">, ApiStat
   late: "LATE"
 };
 type LoadAppointmentOptions = { silent?: boolean };
+
+async function loadAppointmentDetail(id: string) {
+  try {
+    return await apiGetAuthenticated<ApiAppointment>(`/appointments/${id}`);
+  } catch {
+    return apiGetOptionalAuthenticated<ApiAppointment>(`/appointments/${id}/public`);
+  }
+}
 
 export default function LiveAppointmentScreen() {
   const router = useRouter();
@@ -192,7 +202,7 @@ export default function LiveAppointmentScreen() {
     }
 
     try {
-      const item = await apiGetAuthenticated<ApiAppointment>(`/appointments/${id}`);
+      const item = await loadAppointmentDetail(id);
       setAppointment(item);
       setError(null);
     } catch (fetchError) {
@@ -443,6 +453,31 @@ export default function LiveAppointmentScreen() {
       ]
     });
   }, [actionLoading, appointment, myParticipant, router, showDialog, showToast]);
+
+  const handleShareAppointment = useCallback(async () => {
+    if (!appointment) {
+      return;
+    }
+
+    const url = createAppointmentShareUrl({
+      appointmentId: appointment.id,
+      currentHref: typeof window === "undefined" ? undefined : window.location.href
+    });
+
+    try {
+      await Share.share({
+        title: appointment.title,
+        url,
+        message: `${appointment.title}\n${url}`
+      });
+    } catch (shareError) {
+      showDialog({
+        title: "링크를 공유하지 못했어요.",
+        message: shareError instanceof Error ? shareError.message : undefined,
+        tone: "danger"
+      });
+    }
+  }, [appointment, showDialog]);
 
   const handleRemoveParticipant = useCallback((participant: ApiParticipant) => {
     if (!appointment || !myParticipant || appointment.myRole !== "HOST" || participant.userId === user?.id || actionLoading) {
@@ -695,6 +730,7 @@ export default function LiveAppointmentScreen() {
   }
 
   const liveAppointment = appointment;
+  const isParticipant = liveAppointment.isParticipant;
   const locationSummary = locationShareSummary(liveAppointment);
   const LocationIcon = locationSummary.public ? LockKeyholeOpen : LockKeyhole;
   const hasPenalty = isMeaningfulPenalty(liveAppointment.penalty);
@@ -728,6 +764,7 @@ export default function LiveAppointmentScreen() {
   });
   const sectionOrder = createLiveAppointmentSectionOrder({
     hasMyParticipant: myParticipant !== null,
+    isParticipant: liveAppointment.isParticipant,
     hasMemo: appointmentMemo !== null,
     locationPublic: locationSummary.public
   });
@@ -947,9 +984,9 @@ export default function LiveAppointmentScreen() {
           hasPenalty={hasPenalty}
           participantCount={displayParticipants.length}
           etaLabel={myTravelInfoDisplay?.etaPrimaryLabel ?? countdownValue(liveAppointment.scheduledAt)}
-          canLeave={Boolean(myParticipant)}
+          canLeave={isParticipant && Boolean(myParticipant)}
           actionDisabled={actionLoading !== null}
-          onInvite={() => router.push(`/appointments/${liveAppointment.id}/invite`)}
+          onShare={handleShareAppointment}
           onLeave={handleLeave}
         />
       }
@@ -965,12 +1002,12 @@ export default function LiveAppointmentScreen() {
           </Text>
         </View>
         <View style={styles.headerActions}>
-          {myParticipant ? (
+          {isParticipant && myParticipant ? (
             <Pressable onPress={handleLeave} disabled={actionLoading !== null} style={styles.iconButton}>
               <LogOut color={colors.danger} size={21} strokeWidth={2.3} />
             </Pressable>
           ) : null}
-          <Pressable onPress={() => router.push(`/appointments/${liveAppointment.id}/invite`)} style={styles.iconButton}>
+          <Pressable onPress={() => void handleShareAppointment()} style={styles.iconButton}>
             <Share2 color={colors.text} size={22} strokeWidth={2.2} />
           </Pressable>
         </View>
@@ -1008,7 +1045,7 @@ function AppointmentDesktopAside({
   etaLabel,
   canLeave,
   actionDisabled,
-  onInvite,
+  onShare,
   onLeave
 }: {
   title: string;
@@ -1022,7 +1059,7 @@ function AppointmentDesktopAside({
   etaLabel: string;
   canLeave: boolean;
   actionDisabled: boolean;
-  onInvite: () => void;
+  onShare: () => void;
   onLeave: () => void;
 }) {
   return (
@@ -1050,9 +1087,9 @@ function AppointmentDesktopAside({
             <Text style={styles.desktopStatusLabel}>내 이동</Text>
           </View>
         </View>
-        <Pressable onPress={onInvite} style={({ pressed }) => [styles.desktopInviteButton, pressed && styles.buttonPressed]}>
+        <Pressable onPress={() => void onShare()} style={({ pressed }) => [styles.desktopInviteButton, pressed && styles.buttonPressed]}>
           <Share2 color="#FFFFFF" size={18} strokeWidth={2.5} />
-          <Text style={styles.desktopInviteText}>초대 공유</Text>
+          <Text style={styles.desktopInviteText}>링크 공유</Text>
         </Pressable>
         {canLeave ? (
           <Pressable

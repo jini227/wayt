@@ -14,7 +14,8 @@ export function AuthGate({ children }: { children: ReactNode }) {
     }
     const authPath = pathname.startsWith("/auth");
     const onboardingPath = pathname === "/onboarding/travel-mode";
-    if (!user && pathname !== "/login" && !authPath) {
+    const publicAppointmentPath = /^\/appointments\/[0-9a-fA-F-]{36}$/.test(pathname);
+    if (!user && pathname !== "/login" && !authPath && !publicAppointmentPath) {
       router.replace("/login");
     }
     if (user && pathname === "/login") {

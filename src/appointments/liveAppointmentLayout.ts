@@ -26,10 +26,12 @@ type EtaSummary = {
 
 export function createLiveAppointmentSectionOrder({
   hasMyParticipant,
+  isParticipant = hasMyParticipant,
   hasMemo,
   locationPublic
 }: {
   hasMyParticipant: boolean;
+  isParticipant?: boolean;
   hasMemo: boolean;
   locationPublic: boolean;
 }): LiveAppointmentSection[] {
@@ -51,7 +53,7 @@ export function createLiveAppointmentSectionOrder({
     ...(hasMyParticipant ? ["myTravelInfo" as const] : []),
     ...(hasMemo ? ["memo" as const] : []),
     locationPublic ? "activityLog" : "lockedNotice",
-    ...(locationPublic ? ["statusActions" as const] : [])
+    ...(locationPublic && isParticipant ? ["statusActions" as const] : [])
   ];
 }
 

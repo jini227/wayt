@@ -7,6 +7,7 @@ import {
 assert.deepEqual(
   createLiveAppointmentSectionOrder({
     hasMyParticipant: true,
+    isParticipant: true,
     hasMemo: false,
     locationPublic: true
   }),
@@ -17,6 +18,18 @@ assert.deepEqual(
 assert.deepEqual(
   createLiveAppointmentSectionOrder({
     hasMyParticipant: false,
+    isParticipant: false,
+    hasMemo: true,
+    locationPublic: true
+  }),
+  ["map", "appointmentStatus", "participants", "memo", "activityLog"],
+  "public shared details should keep live information visible but omit participant-only action buttons"
+);
+
+assert.deepEqual(
+  createLiveAppointmentSectionOrder({
+    hasMyParticipant: false,
+    isParticipant: false,
     hasMemo: true,
     locationPublic: false
   }),
@@ -27,6 +40,7 @@ assert.deepEqual(
 assert.deepEqual(
   createLiveAppointmentSectionOrder({
     hasMyParticipant: true,
+    isParticipant: true,
     hasMemo: false,
     locationPublic: false
   }),
