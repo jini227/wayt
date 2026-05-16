@@ -14,6 +14,16 @@ export function createAppointmentShareUrl({
   return `/appointments/${encodedId}`;
 }
 
+export function createAppointmentShareMessage({
+  appointmentTitle,
+  url
+}: {
+  appointmentTitle: string;
+  url: string;
+}) {
+  return `${appointmentTitle}\n${url}`;
+}
+
 function originFromUrl(value: string | undefined) {
   if (!value) {
     return null;

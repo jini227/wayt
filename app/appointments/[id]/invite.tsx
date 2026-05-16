@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, Share, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Platform, Pressable, Share, StyleSheet, Text, TextInput, View } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { Check, ChevronRight, Copy, Search, Share2, UserPlus, UsersRound } from "lucide-react-native";
@@ -16,8 +16,6 @@ import {
   buildCurrentParticipantRows,
   buildSentInviteRows,
   buildWaytIdSuggestionRows,
-  createInviteShareMessage,
-  createPublicInviteUrl,
   getSelectedInviteFooterLabel,
   loadInviteScreenData,
   normalizeWaytIdInput,
@@ -28,9 +26,12 @@ import {
   type SentInviteProfile,
   type WaytIdSuggestion
 } from "../../../src/appointments/invite";
+import { createAppointmentShareMessage, createAppointmentShareUrl } from "../../../src/appointments/appointmentShare";
 import { apiGetAuthenticated, apiPostAuthenticated } from "../../../src/api/client";
 import { useAuth } from "../../../src/auth/AuthContext";
+import { env } from "../../../src/config/env";
 import { useAppFeedback } from "../../../src/feedback/AppFeedback";
+import { shareAppointmentWithKakao } from "../../../src/appointments/kakaoAppointmentShare";
 import { colors, spacing } from "../../../src/theme";
 
 type ApiAppointment = {
@@ -56,8 +57,7 @@ export default function InviteScreen() {
   const [appointment, setAppointment] = useState<ApiAppointment | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [linkInvite, setLinkInvite] = useState<ApiInvite | null>(null);
-  const [linkLoading, setLinkLoading] = useState(false);
+  const [shareLoading, setShareLoading] = useState(false);
   const [targetWaytId, setTargetWaytId] = useState("");
   const [idInviteLoading, setIdInviteLoading] = useState(false);
   const [sentInvites, setSentInvites] = useState<ApiInvite[]>([]);
@@ -85,7 +85,6 @@ export default function InviteScreen() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    setLinkInvite(null);
     setSentInvites([]);
     setCancellingInviteIds(new Set());
     setSentInviteProfiles([]);
@@ -97,7 +96,6 @@ export default function InviteScreen() {
       .then(({ appointment: item, invites }) => {
         if (!cancelled) {
           setAppointment(item);
-          setLinkInvite(invites.find((invite) => invite.type === "LINK") ?? null);
           setSentInvites(invites.filter((invite) => invite.type === "WAYT_ID"));
         }
       })
@@ -164,7 +162,6 @@ export default function InviteScreen() {
       if (inviteDataResult.status === "fulfilled") {
         const { appointment: item, invites } = inviteDataResult.value;
         setAppointment(item);
-        setLinkInvite(invites.find((invite) => invite.type === "LINK") ?? null);
         setSentInvites(invites.filter((invite) => invite.type === "WAYT_ID"));
       } else {
         const refreshError = inviteDataResult.reason;
@@ -302,6 +299,15 @@ export default function InviteScreen() {
         : [],
     [addressBookRows, appointment?.participants, sentInvites, serverWaytIdSuggestions, suggestionsOpen, targetWaytId, user?.waytId]
   );
+  const appointmentShareUrl = useMemo(
+    () => appointment
+      ? createAppointmentShareUrl({
+        appointmentId: appointment.id,
+        currentHref: typeof window === "undefined" ? undefined : window.location.href
+      })
+      : "",
+    [appointment]
+  );
 
   useEffect(() => {
     const normalizedMyWaytId = normalizeWaytIdInput(user?.waytId ?? "").toLowerCase();
@@ -380,37 +386,14 @@ export default function InviteScreen() {
     };
   }, [knownSentInviteProfiles, sentInvites, user?.waytId]);
 
-  const ensureLinkInvite = useCallback(async () => {
-    if (linkInvite) {
-      return linkInvite;
-    }
-    if (!appointment) {
-      throw new Error("약속 정보를 먼저 불러와야 해요.");
-    }
-
-    setLinkLoading(true);
-    try {
-      const invite = await apiPostAuthenticated<ApiInvite, Record<string, never>>(
-        `/appointments/${appointment.id}/invite-link`,
-        {}
-      );
-      setLinkInvite(invite);
-      return invite;
-    } finally {
-      setLinkLoading(false);
-    }
-  }, [appointment, linkInvite]);
-
   const handleCopyLink = useCallback(async () => {
     try {
-      const invite = await ensureLinkInvite();
-      const inviteUrl = createPublicInviteUrl({
-        token: invite.token,
-        currentHref: typeof window === "undefined" ? undefined : window.location.href,
-        fallbackUrl: invite.url
-      });
-      await Clipboard.setStringAsync(inviteUrl);
-      showToast({ title: "초대 링크를 복사했어요." });
+      if (!appointmentShareUrl) {
+        throw new Error("약속 정보를 먼저 불러와 주세요.");
+      }
+
+      await Clipboard.setStringAsync(appointmentShareUrl);
+      showToast({ title: "공유 링크를 복사했어요." });
     } catch (copyError) {
       showDialog({
         title: "링크를 만들지 못했어요.",
@@ -418,23 +401,54 @@ export default function InviteScreen() {
         tone: "danger"
       });
     }
-  }, [ensureLinkInvite, showDialog, showToast]);
+  }, [appointmentShareUrl, showDialog, showToast]);
 
   const handleShareLink = useCallback(async () => {
+    if (!appointment || !appointmentShareUrl || shareLoading) {
+      return;
+    }
+
+    setShareLoading(true);
     try {
-      const invite = await ensureLinkInvite();
-      const inviteUrl = createPublicInviteUrl({
-        token: invite.token,
-        currentHref: typeof window === "undefined" ? undefined : window.location.href,
-        fallbackUrl: invite.url
+      const message = createAppointmentShareMessage({
+        appointmentTitle: appointment.title,
+        url: appointmentShareUrl
       });
+
+      if (Platform.OS === "web" && await shareAppointmentWithKakao({
+        javascriptKey: env.kakaoJavascriptKey,
+        appointmentTitle: appointment.title,
+        url: appointmentShareUrl
+      })) {
+        return;
+      }
+
+      const webNavigator = typeof navigator === "undefined"
+        ? null
+        : navigator as Navigator & { share?: (data: { title?: string; text?: string; url?: string }) => Promise<void> };
+
+      if (Platform.OS === "web" && webNavigator?.share) {
+        await webNavigator.share({
+          title: appointment.title,
+          text: message,
+          url: appointmentShareUrl
+        });
+        return;
+      }
+
+      if (Platform.OS === "web") {
+        await Clipboard.setStringAsync(appointmentShareUrl);
+        showToast({
+          title: "공유 링크를 복사했어요.",
+          message: "브라우저 공유가 지원되지 않아 링크를 복사했어요."
+        });
+        return;
+      }
+
       await Share.share({
-        title: appointment?.title ?? "Wayt 초대",
-        url: inviteUrl,
-        message: createInviteShareMessage({
-          appointmentTitle: appointment?.title ?? invite.appointmentTitle,
-          url: inviteUrl
-        })
+        title: appointment.title,
+        url: appointmentShareUrl,
+        message
       });
     } catch (shareError) {
       showDialog({
@@ -442,8 +456,10 @@ export default function InviteScreen() {
         message: shareError instanceof Error ? shareError.message : undefined,
         tone: "danger"
       });
+    } finally {
+      setShareLoading(false);
     }
-  }, [appointment?.title, ensureLinkInvite, showDialog]);
+  }, [appointment, appointmentShareUrl, shareLoading, showDialog, showToast]);
 
   const addAddressBookEntry = useCallback(
     async (targetWaytId: string) => {
@@ -840,15 +856,15 @@ export default function InviteScreen() {
           </InfoCard>
 
           <InfoCard style={styles.cardGap}>
-            <Text style={styles.cardTitle}>링크로 초대</Text>
+            <Text style={styles.cardTitle}>공유하기</Text>
             <View style={styles.linkActions}>
-              <PrimaryButton icon={Copy} style={styles.linkAction} onPress={handleCopyLink} disabled={linkLoading}>
-                {linkLoading ? "링크 생성 중" : "링크 복사"}
+              <PrimaryButton icon={Copy} style={styles.linkAction} onPress={handleCopyLink} disabled={shareLoading}>
+                {shareLoading ? "공유 준비 중" : "링크 복사"}
               </PrimaryButton>
               <Pressable
                 onPress={handleShareLink}
-                disabled={linkLoading}
-                style={({ pressed }) => [styles.shareButton, pressed && !linkLoading && styles.pressed, linkLoading && styles.disabled]}
+                disabled={shareLoading}
+                style={({ pressed }) => [styles.shareButton, pressed && !shareLoading && styles.pressed, shareLoading && styles.disabled]}
               >
                 <Share2 color={colors.textMuted} size={21} strokeWidth={2.2} />
                 <Text style={styles.shareText}>공유하기</Text>

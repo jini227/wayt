@@ -50,7 +50,6 @@ const inviteScreenState = [
   { id: "appointment-1", title: "Dinner", participants: [] },
   false,
   null,
-  null,
   false,
   "",
   false,
@@ -89,6 +88,7 @@ Module._load = function loadWithInviteScreenStubs(request, parent, isMain) {
   if (request === "react-native") {
     return {
       ActivityIndicator: "ActivityIndicator",
+      Platform: { OS: "web" },
       Pressable: "Pressable",
       Share: { share: async () => undefined },
       StyleSheet: { create: (styles) => styles },
@@ -146,6 +146,10 @@ Module._load = function loadWithInviteScreenStubs(request, parent, isMain) {
 
   if (request === "../../../src/auth/AuthContext") {
     return { useAuth: () => ({ user: { id: "user-me", waytId: "@me" } }) };
+  }
+
+  if (request === "../../../src/config/env") {
+    return { env: { kakaoJavascriptKey: "test-key" } };
   }
 
   if (request === "../../../src/feedback/AppFeedback") {

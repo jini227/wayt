@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { createAppointmentShareUrl } from "./appointmentShare";
+import { createAppointmentShareMessage, createAppointmentShareUrl } from "./appointmentShare";
 
 assert.equal(
   createAppointmentShareUrl({
@@ -25,4 +25,13 @@ assert.equal(
   }),
   "/appointments/abc",
   "appointment share urls fall back to an app path without a browser origin"
+);
+
+assert.equal(
+  createAppointmentShareMessage({
+    appointmentTitle: "테스트",
+    url: "http://52.79.233.46/wayt/appointments/abc"
+  }),
+  "테스트\nhttp://52.79.233.46/wayt/appointments/abc",
+  "appointment share messages do not describe the URL as an invite link"
 );
