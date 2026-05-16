@@ -31,7 +31,7 @@ import { apiGetAuthenticated, apiPostAuthenticated } from "../../../src/api/clie
 import { useAuth } from "../../../src/auth/AuthContext";
 import { env } from "../../../src/config/env";
 import { useAppFeedback } from "../../../src/feedback/AppFeedback";
-import { shareAppointmentWithKakao } from "../../../src/appointments/kakaoAppointmentShare";
+import { preloadKakaoAppointmentShare, shareAppointmentWithKakao } from "../../../src/appointments/kakaoAppointmentShare";
 import { colors, spacing } from "../../../src/theme";
 
 type ApiAppointment = {
@@ -310,6 +310,14 @@ export default function InviteScreen() {
   );
 
   useEffect(() => {
+    if (Platform.OS !== "web") {
+      return;
+    }
+
+    void preloadKakaoAppointmentShare({ javascriptKey: env.kakaoJavascriptKey });
+  }, []);
+
+  useEffect(() => {
     const normalizedMyWaytId = normalizeWaytIdInput(user?.waytId ?? "").toLowerCase();
     const knownWaytIds = new Set(
       knownSentInviteProfiles.flatMap((profile) => {
@@ -437,10 +445,10 @@ export default function InviteScreen() {
       }
 
       if (Platform.OS === "web") {
-        await Clipboard.setStringAsync(appointmentShareUrl);
-        showToast({
-          title: "공유 링크를 복사했어요.",
-          message: "브라우저 공유가 지원되지 않아 링크를 복사했어요."
+        showDialog({
+          title: "카카오 공유를 열지 못했어요.",
+          message: "왼쪽 링크 복사 버튼으로 공유 링크를 복사해 주세요.",
+          tone: "warning"
         });
         return;
       }

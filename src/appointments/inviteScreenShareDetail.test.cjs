@@ -43,6 +43,12 @@ assert.match(
 
 assert.match(
   source,
+  /preloadKakaoAppointmentShare/,
+  "invite screen preloads the Kakao Talk sharing SDK before the share button is pressed"
+);
+
+assert.match(
+  source,
   /Share\.share\(\{[\s\S]*url: appointmentShareUrl/,
   "native sharing sends the public appointment detail URL"
 );

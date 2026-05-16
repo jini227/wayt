@@ -53,21 +53,30 @@ export async function shareAppointmentWithKakao({
   appointmentTitle: string;
   url: string;
 }) {
-  if (!javascriptKey || typeof window === "undefined" || typeof document === "undefined") {
+  const kakao = await preloadKakaoAppointmentShare({ javascriptKey });
+  if (!kakao?.Share?.sendDefault) {
     return false;
+  }
+
+  kakao.Share.sendDefault(createKakaoAppointmentSharePayload({ appointmentTitle, url }));
+  return true;
+}
+
+export async function preloadKakaoAppointmentShare({ javascriptKey }: { javascriptKey?: string }) {
+  if (!javascriptKey || typeof window === "undefined" || typeof document === "undefined") {
+    return null;
   }
 
   const kakao = await loadKakaoSdk();
   if (!kakao?.Share?.sendDefault) {
-    return false;
+    return null;
   }
 
   if (!kakao.isInitialized()) {
     kakao.init(javascriptKey);
   }
 
-  kakao.Share.sendDefault(createKakaoAppointmentSharePayload({ appointmentTitle, url }));
-  return true;
+  return kakao;
 }
 
 async function loadKakaoSdk() {
