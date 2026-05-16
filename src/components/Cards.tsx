@@ -1,6 +1,6 @@
 import type { ComponentType, ReactNode } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import { ChevronRight } from "lucide-react-native";
+import { ChevronLeft, ChevronRight } from "lucide-react-native";
 import { colors, spacing } from "../theme";
 
 type IconProps = { color?: string; size?: number; strokeWidth?: number };
@@ -96,7 +96,7 @@ export function Header({
     <View style={[styles.header, center && styles.headerCenter]}>
       {back ? (
         <Pressable onPress={back} hitSlop={10} style={styles.backButton}>
-          <ChevronRight color={colors.text} size={36} strokeWidth={2.5} style={{ transform: [{ rotate: "180deg" }] }} />
+          <ChevronLeft color={colors.text} size={36} strokeWidth={2.5} />
         </Pressable>
       ) : null}
       <View style={center ? styles.centerTitleWrap : undefined}>
