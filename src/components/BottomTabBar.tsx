@@ -1,5 +1,5 @@
 import { usePathname, useRouter } from "expo-router";
-import { Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { colors } from "../theme";
 import { tabs } from "../data/mock";
 import { getBottomTabPressAction, isBottomTabActive } from "./bottomTabNavigation";
@@ -15,6 +15,18 @@ export function BottomTabBar({ variant = "mobile" }: { variant?: BottomTabBarVar
   const desktopWeb = isDesktopWebLayout(width);
   const { requestScrollToTop, scrollToTop } = useScrollToTopRegistry();
 
+  const handleTabPress = (href: string) => {
+    const action = getBottomTabPressAction(pathname, href);
+
+    if (action.type === "navigate") {
+      requestScrollToTop(action.scrollRoute);
+      router.replace(action.target as never);
+      return;
+    }
+
+    scrollToTop(pathname);
+  };
+
   if (variant === "mobile" && desktopWeb) {
     return null;
   }
@@ -26,10 +38,18 @@ export function BottomTabBar({ variant = "mobile" }: { variant?: BottomTabBarVar
   return (
     <View style={[styles.wrap, desktopWeb && styles.desktopWrap]}>
       {desktopWeb ? (
-        <View style={styles.desktopBrand}>
-          <Text style={styles.desktopLogo}>WAYT</Text>
+        <Pressable
+          accessibilityRole="link"
+          accessibilityLabel="홈으로 이동"
+          onPress={() => handleTabPress("/")}
+          style={({ pressed }) => [styles.desktopBrand, pressed && styles.desktopBrandPressed]}
+        >
+          <View style={styles.desktopBrandTitleRow}>
+            <Image source={require("../../assets/wayt-icon.png")} style={styles.desktopBrandIcon} />
+            <Text style={styles.desktopLogo}>WAYT</Text>
+          </View>
           <Text style={styles.desktopTagline}>약속 이동을 한눈에</Text>
-        </View>
+        </Pressable>
       ) : null}
       {tabs.map((tab) => {
         const active = isBottomTabActive(pathname, tab.href);
@@ -38,16 +58,7 @@ export function BottomTabBar({ variant = "mobile" }: { variant?: BottomTabBarVar
           <Pressable
             key={tab.label}
             accessibilityState={{ selected: active }}
-            onPress={() => {
-              const action = getBottomTabPressAction(pathname, tab.href);
-
-              if (action.type === "navigate") {
-                requestScrollToTop(action.scrollRoute);
-                router.replace(action.target as never);
-              } else {
-                scrollToTop(pathname);
-              }
-            }}
+            onPress={() => handleTabPress(tab.href)}
             style={({ pressed }) => [
               styles.item,
               desktopWeb && styles.desktopItem,
@@ -112,6 +123,20 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: "#EEF1F5"
+  },
+  desktopBrandPressed: {
+    opacity: 0.82
+  },
+  desktopBrandTitleRow: {
+    minHeight: 34,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 9
+  },
+  desktopBrandIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 8
   },
   desktopLogo: {
     color: colors.text,
