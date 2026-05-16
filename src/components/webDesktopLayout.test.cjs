@@ -6,6 +6,7 @@ const root = path.resolve(__dirname, "..", "..");
 const helperPath = path.join(root, "src", "components", "webDesktopLayout.ts");
 const appScreenPath = path.join(root, "src", "components", "AppScreen.tsx");
 const bottomTabPath = path.join(root, "src", "components", "BottomTabBar.tsx");
+const footerBarPath = path.join(root, "src", "components", "FooterBar.tsx");
 const rootLayoutPath = path.join(root, "app", "_layout.tsx");
 
 assert.equal(fs.existsSync(helperPath), true, "web desktop layout helper exists");
@@ -13,6 +14,7 @@ assert.equal(fs.existsSync(helperPath), true, "web desktop layout helper exists"
 const helperSource = fs.readFileSync(helperPath, "utf8");
 const appScreenSource = fs.readFileSync(appScreenPath, "utf8");
 const bottomTabSource = fs.readFileSync(bottomTabPath, "utf8");
+const footerBarSource = fs.readFileSync(footerBarPath, "utf8");
 const rootLayoutSource = fs.readFileSync(rootLayoutPath, "utf8");
 
 assert.match(
@@ -34,6 +36,11 @@ assert.match(
   appScreenSource,
   /alignSelf: "flex-start"/,
   "desktop content starts near the side navigation instead of being centered in the remaining viewport"
+);
+assert.match(
+  footerBarSource,
+  /alignSelf: "flex-start"/,
+  "desktop footer actions align with the desktop content instead of centering in the remaining viewport"
 );
 assert.match(
   bottomTabSource,

@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     position: "relative",
     width: "100%",
     maxWidth: DESKTOP_SINGLE_COLUMN_MAX_WIDTH,
-    alignSelf: "center",
+    alignSelf: "flex-start",
     paddingHorizontal: 40,
     paddingTop: 16,
     paddingBottom: 26,
