@@ -173,7 +173,12 @@ export default function NextAppointmentScreen() {
 
             <View style={styles.actions}>
               <Pressable
-                onPress={() => router.push(`/appointments/${viewModel.id}`)}
+                onPress={() =>
+                  router.push({
+                    pathname: "/appointments/[id]",
+                    params: { id: viewModel.id, fromTab: "next" }
+                  })
+                }
                 style={({ pressed }) => [styles.statusButton, pressed && styles.statusButtonPressed]}
               >
                 <Text style={styles.statusButtonText}>{viewModel.actionLabel}</Text>

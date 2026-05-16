@@ -1,20 +1,29 @@
-export function isBottomTabActive(pathname: string, href: string) {
-  if (href === "/") {
-    return pathname === "/" || isHomeOwnedAppointmentPath(pathname);
+export type BottomTabActiveContext = {
+  sourceTabHref?: string | null;
+};
+
+export function isBottomTabActive(pathname: string, href: string, context: BottomTabActiveContext = {}) {
+  if (pathname === href) {
+    return true;
   }
 
-  if (href === "/appointments/next") {
-    return pathname === href;
+  const nestedAppointmentTabHref = getNestedAppointmentTabHref(pathname, context);
+  if (nestedAppointmentTabHref) {
+    return href === nestedAppointmentTabHref;
   }
 
   const section = href.split("/")[1];
   const sectionHref = section ? `/${section}` : href;
 
-  return pathname === href || pathname.startsWith(sectionHref);
+  return pathname.startsWith(sectionHref);
 }
 
-function isHomeOwnedAppointmentPath(pathname: string) {
-  return pathname.startsWith("/appointments/") && pathname !== "/appointments/next";
+function getNestedAppointmentTabHref(pathname: string, context: BottomTabActiveContext) {
+  if (!pathname.startsWith("/appointments/") || pathname === "/appointments/next") {
+    return null;
+  }
+
+  return context.sourceTabHref === "/appointments/next" ? "/appointments/next" : "/";
 }
 
 export function getBottomTabNavigationTarget(pathname: string, href: string) {

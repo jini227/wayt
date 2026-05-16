@@ -1,4 +1,4 @@
-import { usePathname, useRouter } from "expo-router";
+import { useGlobalSearchParams, usePathname, useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from "react-native";
 import { colors } from "../theme";
 import { tabs } from "../data/mock";
@@ -11,9 +11,11 @@ type BottomTabBarVariant = "mobile" | "desktop" | "all";
 export function BottomTabBar({ variant = "mobile" }: { variant?: BottomTabBarVariant } = {}) {
   const router = useRouter();
   const pathname = usePathname();
+  const { fromTab } = useGlobalSearchParams<{ fromTab?: string | string[] }>();
   const { width } = useWindowDimensions();
   const desktopWeb = isDesktopWebLayout(width);
   const { requestScrollToTop, scrollToTop } = useScrollToTopRegistry();
+  const sourceTabHref = getSourceTabHref(fromTab);
 
   const handleTabPress = (href: string) => {
     const action = getBottomTabPressAction(pathname, href);
@@ -52,7 +54,7 @@ export function BottomTabBar({ variant = "mobile" }: { variant?: BottomTabBarVar
         </Pressable>
       ) : null}
       {tabs.map((tab) => {
-        const active = isBottomTabActive(pathname, tab.href);
+        const active = isBottomTabActive(pathname, tab.href, { sourceTabHref });
         const Icon = tab.icon;
         return (
           <Pressable
@@ -190,3 +192,8 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }]
   }
 });
+
+function getSourceTabHref(fromTab?: string | string[]) {
+  const value = Array.isArray(fromTab) ? fromTab[0] : fromTab;
+  return value === "next" ? "/appointments/next" : null;
+}
