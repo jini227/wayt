@@ -49,6 +49,24 @@ assert.match(
   "public shared viewers do not see invite management actions"
 );
 
+assert.match(
+  detailSource,
+  /const showAuthenticatedChrome = Boolean\(user\);/,
+  "appointment detail separates authenticated app chrome from public shared viewing"
+);
+
+assert.match(
+  detailSource,
+  /desktopAside=\{showAuthenticatedChrome \? \(/,
+  "anonymous shared viewers do not see the desktop aside"
+);
+
+assert.match(
+  detailSource,
+  /\{showAuthenticatedChrome \? \(\s*<Pressable onPress=\{\(\) => router\.back\(\)\}/,
+  "anonymous shared viewers do not see the back button"
+);
+
 assert.doesNotMatch(
   detailSource,
   /Share\.share/,

@@ -177,6 +177,7 @@ export default function LiveAppointmentScreen() {
   const locationSyncKeyRef = useRef<string | null>(null);
   const locationSettingsOpenedRef = useRef(false);
   const routePromptRef = useRef<{ appointmentId: string; openedAt: number; prompted: boolean } | null>(null);
+  const showAuthenticatedChrome = Boolean(user);
 
   const showCompletionAlert = useCallback(() => {
     showDialog({
@@ -694,9 +695,11 @@ export default function LiveAppointmentScreen() {
     return (
       <AppScreen refreshing={refreshing} onRefresh={refreshAppointment}>
         <View style={styles.headerRow}>
-          <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backButton}>
-            <ChevronLeft color={colors.text} size={34} strokeWidth={2.3} />
-          </Pressable>
+          {showAuthenticatedChrome ? (
+            <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backButton}>
+              <ChevronLeft color={colors.text} size={34} strokeWidth={2.3} />
+            </Pressable>
+          ) : null}
         </View>
         <Text style={styles.stateText}>{error ?? "약속 정보를 찾지 못했어요."}</Text>
       </AppScreen>
@@ -947,7 +950,7 @@ export default function LiveAppointmentScreen() {
     <AppScreen
       refreshing={refreshing}
       onRefresh={refreshAppointment}
-      desktopAside={
+      desktopAside={showAuthenticatedChrome ? (
         <AppointmentDesktopAside
           title={liveAppointment.title}
           scheduleLabel={mapMeta.scheduleLabel}
@@ -964,12 +967,14 @@ export default function LiveAppointmentScreen() {
           onInvite={() => router.push(`/appointments/${liveAppointment.id}/invite`)}
           onLeave={handleLeave}
         />
-      }
+      ) : undefined}
     >
       <View style={styles.headerRow}>
-        <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backButton}>
-          <ChevronLeft color={colors.text} size={34} strokeWidth={2.3} />
-        </Pressable>
+        {showAuthenticatedChrome ? (
+          <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backButton}>
+            <ChevronLeft color={colors.text} size={34} strokeWidth={2.3} />
+          </Pressable>
+        ) : null}
         <View style={styles.headerTitleWrap}>
           <Text style={styles.title} numberOfLines={1}>{liveAppointment.title}</Text>
           <Text style={styles.subtitle}>
