@@ -31,6 +31,11 @@ assert.match(
   "AppScreen applies desktop layout through the shared web-only helper"
 );
 assert.match(
+  appScreenSource,
+  /alignSelf: "flex-start"/,
+  "desktop content starts near the side navigation instead of being centered in the remaining viewport"
+);
+assert.match(
   bottomTabSource,
   /isDesktopWebLayout\(width\)/,
   "BottomTabBar applies sidebar layout through the shared web-only helper"

@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
   desktopGrid: {
     width: "100%",
     maxWidth: DESKTOP_CONTENT_MAX_WIDTH,
-    alignSelf: "center",
+    alignSelf: "flex-start",
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 24
