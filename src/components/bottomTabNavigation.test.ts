@@ -24,6 +24,16 @@ assertEqual(
   "pressing the active tab does not navigate"
 );
 assertEqual(
+  getBottomTabNavigationTarget("/appointments/abc123", "/"),
+  "/",
+  "pressing the active home tab from appointment detail returns to the home list"
+);
+assertEqual(
+  getBottomTabNavigationTarget("/history/appointment-1", "/history"),
+  "/history",
+  "pressing the active history tab from history detail returns to the history list"
+);
+assertEqual(
   getBottomTabNavigationTarget("/appointments/next", "/history"),
   "/history",
   "pressing an inactive tab navigates to its href"
@@ -31,6 +41,13 @@ assertEqual(
 
 const activePressAction = getBottomTabPressAction("/appointments/next", "/appointments/next");
 assertEqual(activePressAction.type, "scrollToTop", "pressing the active tab scrolls the current screen to top");
+
+const activeNestedPressAction = getBottomTabPressAction("/appointments/abc123", "/");
+assertEqual(activeNestedPressAction.type, "navigate", "pressing home from appointment detail navigates to the home list");
+if (activeNestedPressAction.type !== "navigate") {
+  throw new Error("active nested home press should be a navigation action");
+}
+assertEqual(activeNestedPressAction.target, "/", "active nested home press targets the home list");
 
 const inactivePressAction = getBottomTabPressAction("/appointments/next", "/history");
 assertEqual(inactivePressAction.type, "navigate", "pressing an inactive tab returns a navigation action");

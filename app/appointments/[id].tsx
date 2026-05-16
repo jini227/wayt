@@ -3,7 +3,7 @@ import { ActivityIndicator, AppState, Modal, Platform, Pressable, ScrollView, St
 import * as Clipboard from "expo-clipboard";
 import * as Linking from "expo-linking";
 import * as Location from "expo-location";
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import {
   Car,
   CheckCircle2,
@@ -161,6 +161,7 @@ async function loadAppointmentDetail(id: string) {
 
 export default function LiveAppointmentScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { user } = useAuth();
   const { showDialog, showToast } = useAppFeedback();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -190,6 +191,15 @@ export default function LiveAppointmentScreen() {
       ]
     });
   }, [router, showDialog]);
+
+  const handleBackPress = useCallback(() => {
+    if (navigation.canGoBack()) {
+      router.back();
+      return;
+    }
+
+    router.replace("/");
+  }, [navigation, router]);
 
   const loadAppointment = useCallback(async ({ silent = false }: LoadAppointmentOptions = {}) => {
     if (!id) {
@@ -696,7 +706,7 @@ export default function LiveAppointmentScreen() {
       <AppScreen refreshing={refreshing} onRefresh={refreshAppointment}>
         <View style={styles.headerRow}>
           {showAuthenticatedChrome ? (
-            <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backButton}>
+            <Pressable onPress={handleBackPress} hitSlop={10} style={styles.backButton}>
               <ChevronLeft color={colors.text} size={34} strokeWidth={2.3} />
             </Pressable>
           ) : null}
@@ -971,7 +981,7 @@ export default function LiveAppointmentScreen() {
     >
       <View style={styles.headerRow}>
         {showAuthenticatedChrome ? (
-          <Pressable onPress={() => router.back()} hitSlop={10} style={styles.backButton}>
+          <Pressable onPress={handleBackPress} hitSlop={10} style={styles.backButton}>
             <ChevronLeft color={colors.text} size={34} strokeWidth={2.3} />
           </Pressable>
         ) : null}

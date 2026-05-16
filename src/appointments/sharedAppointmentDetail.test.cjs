@@ -57,13 +57,25 @@ assert.match(
 
 assert.match(
   detailSource,
+  /const navigation = useNavigation\(\);/,
+  "appointment detail can inspect whether the shared-link screen has back history"
+);
+
+assert.match(
+  detailSource,
+  /navigation\.canGoBack\(\)[\s\S]*router\.back\(\)[\s\S]*router\.replace\("\/"\)/,
+  "shared-link back actions fall back to home when there is no navigation history"
+);
+
+assert.match(
+  detailSource,
   /desktopAside=\{showAuthenticatedChrome \? \(/,
   "anonymous shared viewers do not see the desktop aside"
 );
 
 assert.match(
   detailSource,
-  /\{showAuthenticatedChrome \? \(\s*<Pressable onPress=\{\(\) => router\.back\(\)\}/,
+  /\{showAuthenticatedChrome \? \(\s*<Pressable onPress=\{handleBackPress\}/,
   "anonymous shared viewers do not see the back button"
 );
 

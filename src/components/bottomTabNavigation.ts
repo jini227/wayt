@@ -18,7 +18,7 @@ function isHomeOwnedAppointmentPath(pathname: string) {
 }
 
 export function getBottomTabNavigationTarget(pathname: string, href: string) {
-  return isBottomTabActive(pathname, href) ? null : href;
+  return pathname === href ? null : href;
 }
 
 export type BottomTabPressAction =
