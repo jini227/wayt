@@ -31,6 +31,7 @@ type AppScreenProps = {
   onRefresh?: () => void;
   onPullDownDismiss?: () => void;
   desktopAside?: ReactNode;
+  desktopAlign?: "start" | "center";
 };
 
 export function AppScreen({
@@ -44,7 +45,8 @@ export function AppScreen({
   refreshing,
   onRefresh,
   onPullDownDismiss,
-  desktopAside
+  desktopAside,
+  desktopAlign = "start"
 }: AppScreenProps) {
   const pathname = usePathname();
   const { width } = useWindowDimensions();
@@ -122,7 +124,13 @@ export function AppScreen({
   );
 
   const content = desktopWeb ? (
-    <View style={[styles.desktopGrid, !desktopAside && styles.desktopGridSingle]}>
+    <View
+      style={[
+        styles.desktopGrid,
+        desktopAlign === "center" && styles.desktopGridCentered,
+        !desktopAside && styles.desktopGridSingle
+      ]}
+    >
       <View style={styles.desktopMain}>{children}</View>
       {desktopAside ? <View style={styles.desktopAside}>{desktopAside}</View> : null}
     </View>
@@ -266,6 +274,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 24
+  },
+  desktopGridCentered: {
+    alignSelf: "center"
   },
   desktopGridSingle: {
     maxWidth: DESKTOP_SINGLE_COLUMN_MAX_WIDTH

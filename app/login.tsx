@@ -16,7 +16,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <AppScreen noScroll>
+    <AppScreen noScroll desktopAlign="center">
       <View style={styles.screen}>
         <View style={styles.brandBlock}>
           <Image source={require("../assets/wayt-splash.png")} style={styles.brandImage} resizeMode="contain" />

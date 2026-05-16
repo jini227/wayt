@@ -7,6 +7,7 @@ const helperPath = path.join(root, "src", "components", "webDesktopLayout.ts");
 const appScreenPath = path.join(root, "src", "components", "AppScreen.tsx");
 const bottomTabPath = path.join(root, "src", "components", "BottomTabBar.tsx");
 const footerBarPath = path.join(root, "src", "components", "FooterBar.tsx");
+const loginPath = path.join(root, "app", "login.tsx");
 const rootLayoutPath = path.join(root, "app", "_layout.tsx");
 
 assert.equal(fs.existsSync(helperPath), true, "web desktop layout helper exists");
@@ -15,6 +16,7 @@ const helperSource = fs.readFileSync(helperPath, "utf8");
 const appScreenSource = fs.readFileSync(appScreenPath, "utf8");
 const bottomTabSource = fs.readFileSync(bottomTabPath, "utf8");
 const footerBarSource = fs.readFileSync(footerBarPath, "utf8");
+const loginSource = fs.readFileSync(loginPath, "utf8");
 const rootLayoutSource = fs.readFileSync(rootLayoutPath, "utf8");
 
 assert.match(
@@ -41,6 +43,16 @@ assert.match(
   footerBarSource,
   /alignSelf: "flex-start"/,
   "desktop footer actions align with the desktop content instead of centering in the remaining viewport"
+);
+assert.match(
+  appScreenSource,
+  /desktopAlign === "center"/,
+  "AppScreen allows specific desktop screens to remain centered"
+);
+assert.match(
+  loginSource,
+  /desktopAlign="center"/,
+  "login screen stays centered on desktop web while app screens align near the side navigation"
 );
 assert.match(
   bottomTabSource,
