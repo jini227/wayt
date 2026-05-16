@@ -465,6 +465,12 @@ export default function LiveAppointmentScreen() {
     });
 
     try {
+      if (Platform.OS === "web") {
+        await Clipboard.setStringAsync(url);
+        showToast({ title: "링크를 복사했어요." });
+        return;
+      }
+
       await Share.share({
         title: appointment.title,
         url,
@@ -477,7 +483,7 @@ export default function LiveAppointmentScreen() {
         tone: "danger"
       });
     }
-  }, [appointment, showDialog]);
+  }, [appointment, showDialog, showToast]);
 
   const handleRemoveParticipant = useCallback((participant: ApiParticipant) => {
     if (!appointment || !myParticipant || appointment.myRole !== "HOST" || participant.userId === user?.id || actionLoading) {
@@ -730,7 +736,7 @@ export default function LiveAppointmentScreen() {
   }
 
   const liveAppointment = appointment;
-  const isParticipant = liveAppointment.isParticipant;
+  const isParticipant = liveAppointment.isParticipant || Boolean(myParticipant);
   const locationSummary = locationShareSummary(liveAppointment);
   const LocationIcon = locationSummary.public ? LockKeyholeOpen : LockKeyhole;
   const hasPenalty = isMeaningfulPenalty(liveAppointment.penalty);
@@ -764,7 +770,7 @@ export default function LiveAppointmentScreen() {
   });
   const sectionOrder = createLiveAppointmentSectionOrder({
     hasMyParticipant: myParticipant !== null,
-    isParticipant: liveAppointment.isParticipant,
+    isParticipant,
     hasMemo: appointmentMemo !== null,
     locationPublic: locationSummary.public
   });
@@ -984,7 +990,7 @@ export default function LiveAppointmentScreen() {
           hasPenalty={hasPenalty}
           participantCount={displayParticipants.length}
           etaLabel={myTravelInfoDisplay?.etaPrimaryLabel ?? countdownValue(liveAppointment.scheduledAt)}
-          canLeave={isParticipant && Boolean(myParticipant)}
+          canLeave={Boolean(myParticipant)}
           actionDisabled={actionLoading !== null}
           onShare={handleShareAppointment}
           onLeave={handleLeave}
@@ -1002,7 +1008,7 @@ export default function LiveAppointmentScreen() {
           </Text>
         </View>
         <View style={styles.headerActions}>
-          {isParticipant && myParticipant ? (
+          {myParticipant ? (
             <Pressable onPress={handleLeave} disabled={actionLoading !== null} style={styles.iconButton}>
               <LogOut color={colors.danger} size={21} strokeWidth={2.3} />
             </Pressable>

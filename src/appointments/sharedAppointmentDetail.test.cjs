@@ -21,8 +21,26 @@ assert.match(
 
 assert.match(
   detailSource,
-  /isParticipant:\s*liveAppointment\.isParticipant/,
-  "appointment detail sections are driven by the server participant flag"
+  /const isParticipant = liveAppointment\.isParticipant \|\| Boolean\(myParticipant\);/,
+  "appointment detail treats the current participant row as a participant fallback"
+);
+
+assert.match(
+  detailSource,
+  /isParticipant,\s*[\r\n\s]+hasMemo:/,
+  "appointment detail sections use the normalized participant flag"
+);
+
+assert.match(
+  detailSource,
+  /Platform\.OS === "web"[\s\S]*Clipboard\.setStringAsync\(url\)/,
+  "web share button copies the appointment link instead of using unsupported native share"
+);
+
+assert.match(
+  detailSource,
+  /canLeave=\{Boolean\(myParticipant\)\}/,
+  "participants keep the leave action even when the backend has not deployed isParticipant yet"
 );
 
 assert.doesNotMatch(
